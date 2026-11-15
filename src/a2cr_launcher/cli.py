@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 from os import pathsep
 from pathlib import Path
-from sys import exit
+from sys import exit, stderr, stdout
 
 from requests import RequestException
 from rich.console import Console
@@ -25,6 +25,15 @@ from a2cr_launcher.mods import modrinth
 from a2cr_launcher.mods.install import instance_context as mod_instance_context
 from a2cr_launcher.mods.install import install as install_mod
 from a2cr_launcher.mods.install import list_installed as list_installed_mods
+
+
+def _make_console_safe() -> None:
+    """Windows CI 的控制台编码不一定是 UTF-8，中文帮助文本会抛 UnicodeEncodeError。"""
+    for stream in (stdout, stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):
+            continue
 
 
 def _start_game(console: Console, version_id: str, game_dir: Path, memory: str = "4G",
@@ -82,6 +91,7 @@ def _start_game(console: Console, version_id: str, game_dir: Path, memory: str =
 
 
 def main():
+    _make_console_safe()
     console = Console()
     parser = ArgumentParser(description='a2cr Minecraft Launcher')
     subparsers = parser.add_subparsers(dest='command')
