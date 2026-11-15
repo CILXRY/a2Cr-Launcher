@@ -108,4 +108,12 @@ uv run al-gui                       # 4. 窗口能开、能启动、不卡死
 2. 有没有要动 **冻结接口**？
 3. 卡在哪？
 
+## 版本更新
+
+项目使用 [Release Please](https://github.com/googleapis/release-please) 来管理版本，
+版本的递增在 PR 到 `elegant` 分支进行
+
+需要使用 Squash Merge 并使用 [Conventional Commit messages](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范来作为
+PR 标题
+
 问文件，不问功能——功能描述会骗人，文件列表不会。
