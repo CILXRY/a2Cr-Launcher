@@ -1,6 +1,6 @@
 [project]
 name = "a2cr-launcher"
-version = "0.2.0"
+version = "0.3.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -8,14 +8,27 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "pyrefly>=0.60.0",
+    "flet==1.1.2",
+    "flet-desktop==1.1.2",
+    "pyrefly==1.4.1",
     "requests>=2.34.2",
     "rich>=15.0.0",
 ]
 
 [project.scripts]
 al = "a2cr_launcher:main"
+al-gui = "a2cr_launcher.ui.gui:run"
 
 [build-system]
 requires = ["uv_build>=0.12.16,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.flet]
+org = "cc.cilxry"
+company = "cilxry"
+product = "a2Cr Launcher"
+build_version = "0.3.0"
+build_number = 1
+
+[tool.flet.app]
+path = "src"
