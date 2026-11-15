@@ -9,6 +9,8 @@ from rich.console import Console
 from rich.table import Table
 
 from a2cr_launcher import instance
+from a2cr_launcher.auth import microsoft
+from a2cr_launcher.auth import store as auth_store
 from a2cr_launcher.core.paths import VERSIONS_DIR, LIBRARIES_DIR, ASSETS_DIR, INSTANCES_DIR, LOG_CONFIGS_DIR
 from a2cr_launcher.core.platform_info import current_platform
 from a2cr_launcher.launch.arguments import build_arguments
@@ -25,7 +27,8 @@ from a2cr_launcher.mods.install import install as install_mod
 from a2cr_launcher.mods.install import list_installed as list_installed_mods
 
 
-def _start_game(console: Console, version_id: str, game_dir: Path, memory: str = "4G") -> int:
+def _start_game(console: Console, version_id: str, game_dir: Path, memory: str = "4G",
+                account: dict | None = None, username: str = "a2Cr") -> int:
     """解析版本（合并 inheritsFrom）、检查文件、启动游戏，返回退出码。"""
     try:
         meta = resolve_meta(version_id)
@@ -48,7 +51,7 @@ def _start_game(console: Console, version_id: str, game_dir: Path, memory: str =
         return 1
 
     try:
-        arguments = build_arguments(meta, game_dir, max_memory=memory)
+        arguments = build_arguments(meta, game_dir, name=username, max_memory=memory, account=account)
     except RuntimeError as err:
         console.print(f"[red]{err}[/red]")
         return 1
@@ -69,6 +72,10 @@ def _start_game(console: Console, version_id: str, game_dir: Path, memory: str =
     console.print(f"Java: [cyan]{arguments[0]}[/cyan]")
     console.print(f"游戏目录: [cyan]{game_dir}[/cyan]")
     console.print(f"日志文件: [cyan]{Path(game_dir, 'logs', 'latest.log')}[/cyan]")
+    if account:
+        console.print(f"账号: [cyan]{account['name']}[/cyan]（正版）")
+    else:
+        console.print(f"账号: [cyan]{username}[/cyan]（离线）")
     exit_code = launch(arguments, game_dir)
     console.print(f"游戏已退出，退出码 {exit_code}")
     return exit_code
@@ -90,6 +97,12 @@ def main():
     launch_parser.add_argument('--version', action='store')
     launch_parser.add_argument('--instance', action='store')
     launch_parser.add_argument('--memory', action='store', default='4G')
+    launch_parser.add_argument('--offline', action='store_true', help='强制使用离线账号')
+    launch_parser.add_argument('--username', action='store', default='a2Cr', help='离线模式下的玩家名')
+
+    subparsers.add_parser('login', help='微软正版登录')
+    subparsers.add_parser('logout', help='退出当前正版账号')
+    subparsers.add_parser('account', help='查看当前登录的账号')
 
     import_parser = subparsers.add_parser('import')
     import_parser.add_argument('path', help='整合包压缩包（.mrpack / .zip）')
@@ -279,16 +292,66 @@ def main():
                 mods_table.add_row(path.name, f"{path.stat().st_size / 1024 / 1024:.1f} MB")
             console.print(mods_table)
 
+    elif args.command == 'login':
+        try:
+            console.print("正在向微软申请设备码 ...")
+            device = microsoft.request_device_code()
+            console.print(f"请在浏览器打开 [cyan]{device['verification_uri']}[/cyan]")
+            console.print(f"输入代码：[bold]{device['user_code']}[/bold]")
+            console.print("等待授权中（Ctrl+C 取消）...")
+            token = microsoft.poll_device_token(device)
+            console.print("授权成功，正在换取 Minecraft 令牌 ...")
+            account = microsoft.login_with_microsoft_token(token)
+            auth_store.save(account)
+        except microsoft.AuthError as err:
+            console.print(f"[red]登录失败：{err}[/red]")
+            exit(1)
+        except RequestException as err:
+            console.print(f"[red][Network Error] 登录请求失败，请检查网络或者代理设置: {err}[/red]")
+            exit(1)
+        except KeyboardInterrupt:
+            console.print("\n[yellow]已取消登录。[/yellow]")
+            exit(1)
+        console.print(f"[green]登录成功：{account['name']}[/green]（{account['uuid']}）")
+
+    elif args.command == 'logout':
+        if auth_store.load() is None:
+            console.print("当前没有登录的账号。")
+        else:
+            auth_store.clear()
+            console.print("[green]已退出正版账号。[/green]")
+
+    elif args.command == 'account':
+        account = auth_store.get_valid(log=console.print)
+        if account is None:
+            console.print("当前没有登录正版账号，使用 `al login` 登录。")
+            exit(0)
+        account_table = Table(title="当前账号")
+        account_table.add_column("项目")
+        account_table.add_column("值")
+        account_table.add_row("玩家名", account["name"])
+        account_table.add_row("UUID", account["uuid"])
+        account_table.add_row("类型", "微软正版")
+        account_table.add_row("令牌过期时间", account.get("expires_at", ""))
+        console.print(account_table)
+
     elif args.command == 'launch':
+        account = None
+        if not args.offline:
+            account = auth_store.get_valid(log=console.print)
+            if account is None:
+                console.print("[yellow]未登录正版账号，本次使用离线账号（登录：al login）。[/yellow]")
         if args.instance:
             meta = instance.load(args.instance)
             if meta is None:
                 console.print(f"[red]找不到实例：{args.instance}，可以用 `al instance list` 查看已导入的整合包[/red]")
                 exit(1)
             game_dir = instance.instance_dir(meta["folder"])
-            exit(_start_game(console, meta["version_id"], game_dir, args.memory))
+            exit(_start_game(console, meta["version_id"], game_dir, args.memory,
+                             account=account, username=args.username))
         if args.version:
-            exit(_start_game(console, args.version, Path(INSTANCES_DIR, args.version), args.memory))
+            exit(_start_game(console, args.version, Path(INSTANCES_DIR, args.version), args.memory,
+                             account=account, username=args.username))
         console.print("[red]请指定 --version（原版版本）或 --instance（整合包实例）[/red]")
         exit(1)
 

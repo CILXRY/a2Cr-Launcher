@@ -43,6 +43,24 @@ uv run al install --version 26.2          # 安装原版
 uv run al launch --version 26.2           # 启动原版
 ```
 
+### 正版登录（微软账号）
+
+```bash
+uv run al login      # 按提示打开 https://www.microsoft.com/link 输入代码
+uv run al account    # 查看当前账号、令牌过期时间
+uv run al logout     # 退出当前账号
+```
+
+登录使用微软的**设备代码流程**，不需要密码、不需要开浏览器回调。登录后启动游戏会自动带上正版账号：
+
+```bash
+uv run al launch --instance "机械动力"          # 有登录时自动用正版账号
+uv run al launch --instance "机械动力" --offline # 强制离线
+uv run al launch --version 26.2 --offline --username Steve  # 离线模式自定义名字
+```
+
+账号信息（含 refresh token）保存在 `~/.a2CrLauncher/auth.json`，access token 快过期时会自动续期；换机器或想退出时运行 `al logout` 删除即可。
+
 ### 导入整合包
 
 支持三种整合包格式：

@@ -62,7 +62,7 @@ def _build_game_arguments(arg_raw, values):
     return arguments
 
 
-def build_arguments(meta, game_dir: Path, name="a2Cr", max_memory="16G"):
+def build_arguments(meta, game_dir: Path, name="a2Cr", max_memory="16G", account=None):
     version = meta["id"]
     base_version = meta.get("_baseVersion", version)
     main_class = str(meta.get("mainClass") or "")
@@ -70,16 +70,32 @@ def build_arguments(meta, game_dir: Path, name="a2Cr", max_memory="16G"):
     # 再把原版 client.jar 一起放进去会出现两个导出同一包的模块（minecraft 和 client），
     # 模块解析直接失败。原版 / Fabric / Quilt 则需要这个 client.jar。
     include_client = "bootstraplauncher" not in main_class.lower()
+
+    if account:
+        player_name = account["name"]
+        player_uuid = account["uuid"]
+        access_token = account["access_token"]
+        user_type = "msa"
+        client_id = account.get("client_id", "")
+        xuid = account.get("xuid", "")
+    else:
+        player_name = name
+        player_uuid = offline_uuid(name)
+        access_token = "0"
+        user_type = "legacy"
+        client_id = ""
+        xuid = ""
+
     values = {
-        "auth_player_name": name,
+        "auth_player_name": player_name,
         "version_name": version,
         "game_directory": str(game_dir),
         "assets_root": str(ASSETS_DIR),
         "assets_index_name": meta["assetIndex"]["id"],
-        "auth_uuid": offline_uuid(name),
-        "auth_access_token": "0",
-        "clientid": "", "auth_xuid": "",
-        "user_type": "legacy",
+        "auth_uuid": player_uuid,
+        "auth_access_token": access_token,
+        "clientid": client_id, "auth_xuid": xuid,
+        "user_type": user_type,
         "version_type": meta.get("type", "release"),
         "natives_directory": str(Path(VERSIONS_DIR, version, "natives")),
         "library_directory": str(LIBRARIES_DIR),
