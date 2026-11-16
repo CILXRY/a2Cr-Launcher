@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2-beta](https://github.com/CILXRY/a2cr-Launcher/compare/a2cr-launcher-v0.3.1...a2cr-launcher-v0.3.2-beta) (2026-11-16)
+
+
+### Features
+
+* 微软正版登录 + Modrinth 模组下载 ([#12](https://github.com/CILXRY/a2cr-Launcher/issues/12)) ([06c92eb](https://github.com/CILXRY/a2cr-Launcher/commit/06c92eb8105c5fb36c7a3b99e0c1e2eb6384fbf2))
+
 ## [0.3.1](https://github.com/CILXRY/a2cr-Launcher/compare/a2cr-launcher-v0.3.0...a2cr-launcher-v0.3.1) (2026-11-15)
 
 
