@@ -80,6 +80,24 @@ uv run al install --version 26.2          # 安装原版
 uv run al launch --version 26.2           # 启动原版
 ```
 
+### 正版登录（微软账号）
+
+```bash
+uv run al login      # 按提示打开 https://www.microsoft.com/link 输入代码
+uv run al account    # 查看当前账号、令牌过期时间
+uv run al logout     # 退出当前账号
+```
+
+登录使用微软的**设备代码流程**，不需要密码、不需要开浏览器回调。登录后启动游戏会自动带上正版账号：
+
+```bash
+uv run al launch --instance "机械动力"          # 有登录时自动用正版账号
+uv run al launch --instance "机械动力" --offline # 强制离线
+uv run al launch --version 26.2 --offline --username Steve  # 离线模式自定义名字
+```
+
+账号信息（含 refresh token）保存在 `~/.a2CrLauncher/auth.json`，access token 快过期时会自动续期；换机器或想退出时运行 `al logout` 删除即可。
+
 ### 导入整合包
 
 支持三种整合包格式：
@@ -113,3 +131,28 @@ uv run al launch --instance "机械动力" --memory 8G   # 大型整合包可以
 ```bash
 uv run al instance list
 ```
+
+### 下载模组
+
+从 [Modrinth](https://modrinth.com/mods) 搜索模组，直接装进指定实例（自动适配实例的 Minecraft 版本和加载器，并补上前置依赖）：
+
+```bash
+# 在实例的版本/加载器范围内搜索
+uv run al mod search jei --instance "机械动力"
+
+# 安装（自动选最新兼容版本，自动下载 required 依赖）
+uv run al mod install jei --instance "机械动力"
+
+# 只看某个版本、不装依赖
+uv run al mod install jei --instance "机械动力" --version-id <Modrinth 版本 id> --no-deps
+
+# 查看实例里已经装了哪些模组
+uv run al mod list --instance "机械动力"
+```
+
+没有实例时也可以按版本和加载器搜索：
+
+```bash
+uv run al mod search sodium --version 1.21.1 --loader fabric
+```
+

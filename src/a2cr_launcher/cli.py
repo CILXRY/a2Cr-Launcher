@@ -2,13 +2,15 @@ from argparse import ArgumentParser
 from datetime import datetime
 from os import pathsep
 from pathlib import Path
-from sys import exit
+from sys import exit, stderr, stdout
 
 from requests import RequestException
 from rich.console import Console
 from rich.table import Table
 
 from a2cr_launcher import instance
+from a2cr_launcher.auth import microsoft
+from a2cr_launcher.auth import store as auth_store
 from a2cr_launcher.core.paths import VERSIONS_DIR, LIBRARIES_DIR, ASSETS_DIR, INSTANCES_DIR, LOG_CONFIGS_DIR
 from a2cr_launcher.core.platform_info import current_platform
 from a2cr_launcher.launch.arguments import build_arguments
@@ -19,9 +21,23 @@ from a2cr_launcher.meta.manifest import get_version_manifest
 from a2cr_launcher.meta.merge import resolve_meta
 from a2cr_launcher.meta.versions import get_version_meta
 from a2cr_launcher.modpack import import_pack
+from a2cr_launcher.mods import modrinth
+from a2cr_launcher.mods.install import instance_context as mod_instance_context
+from a2cr_launcher.mods.install import install as install_mod
+from a2cr_launcher.mods.install import list_installed as list_installed_mods
 
 
-def _start_game(console: Console, version_id: str, game_dir: Path, memory: str = "4G") -> int:
+def _make_console_safe() -> None:
+    """Windows CI 的控制台编码不一定是 UTF-8，中文帮助文本会抛 UnicodeEncodeError。"""
+    for stream in (stdout, stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):
+            continue
+
+
+def _start_game(console: Console, version_id: str, game_dir: Path, memory: str = "4G",
+                account: dict | None = None, username: str = "a2Cr") -> int:
     """解析版本（合并 inheritsFrom）、检查文件、启动游戏，返回退出码。"""
     try:
         meta = resolve_meta(version_id)
@@ -44,7 +60,7 @@ def _start_game(console: Console, version_id: str, game_dir: Path, memory: str =
         return 1
 
     try:
-        arguments = build_arguments(meta, game_dir, max_memory=memory)
+        arguments = build_arguments(meta, game_dir, name=username, max_memory=memory, account=account)
     except RuntimeError as err:
         console.print(f"[red]{err}[/red]")
         return 1
@@ -65,12 +81,17 @@ def _start_game(console: Console, version_id: str, game_dir: Path, memory: str =
     console.print(f"Java: [cyan]{arguments[0]}[/cyan]")
     console.print(f"游戏目录: [cyan]{game_dir}[/cyan]")
     console.print(f"日志文件: [cyan]{Path(game_dir, 'logs', 'latest.log')}[/cyan]")
+    if account:
+        console.print(f"账号: [cyan]{account['name']}[/cyan]（正版）")
+    else:
+        console.print(f"账号: [cyan]{username}[/cyan]（离线）")
     exit_code = launch(arguments, game_dir)
     console.print(f"游戏已退出，退出码 {exit_code}")
     return exit_code
 
 
 def main():
+    _make_console_safe()
     console = Console()
     parser = ArgumentParser(description='a2cr Minecraft Launcher')
     subparsers = parser.add_subparsers(dest='command')
@@ -86,6 +107,12 @@ def main():
     launch_parser.add_argument('--version', action='store')
     launch_parser.add_argument('--instance', action='store')
     launch_parser.add_argument('--memory', action='store', default='4G')
+    launch_parser.add_argument('--offline', action='store_true', help='强制使用离线账号')
+    launch_parser.add_argument('--username', action='store', default='a2Cr', help='离线模式下的玩家名')
+
+    subparsers.add_parser('login', help='微软正版登录')
+    subparsers.add_parser('logout', help='退出当前正版账号')
+    subparsers.add_parser('account', help='查看当前登录的账号')
 
     import_parser = subparsers.add_parser('import')
     import_parser.add_argument('path', help='整合包压缩包（.mrpack / .zip）')
@@ -94,6 +121,26 @@ def main():
     instance_parser = subparsers.add_parser('instance')
     instance_sub = instance_parser.add_subparsers(dest='instance_action')
     instance_sub.add_parser('list')
+
+    mod_parser = subparsers.add_parser('mod')
+    mod_sub = mod_parser.add_subparsers(dest='mod_action', required=True)
+
+    mod_search = mod_sub.add_parser('search', help='在 Modrinth 搜索模组')
+    mod_search.add_argument('query')
+    mod_search.add_argument('--limit', type=int, default=10)
+    mod_search.add_argument('--instance', help='按这个实例的版本/加载器过滤')
+    mod_search.add_argument('--version', help='Minecraft 版本（不给 --instance 时必填）')
+    mod_search.add_argument('--loader', choices=['forge', 'neoforge', 'fabric', 'quilt'],
+                            help='加载器（不给 --instance 时必填）')
+
+    mod_install = mod_sub.add_parser('install', help='把模组下载到实例')
+    mod_install.add_argument('slug', help='Modrinth 项目 slug，比如 jei')
+    mod_install.add_argument('--instance', required=True)
+    mod_install.add_argument('--version-id', help='指定 Modrinth 版本 id（默认自动选最新兼容版本）')
+    mod_install.add_argument('--no-deps', action='store_true', help='不自动安装前置依赖')
+
+    mod_list = mod_sub.add_parser('list', help='列出实例里已安装的模组')
+    mod_list.add_argument('--instance', required=True)
 
     args = parser.parse_args()
 
@@ -191,16 +238,130 @@ def main():
                           loader_text, item.get("created_at", ""))
         console.print(table)
 
+    elif args.command == 'mod':
+        if args.mod_action == 'search':
+            mc_version, loader = args.version, args.loader
+            if args.instance:
+                try:
+                    _, mc_version, loader, _ = mod_instance_context(args.instance)
+                except ValueError as err:
+                    console.print(f"[red]{err}[/red]")
+                    exit(1)
+            if not mc_version or not loader:
+                console.print("[red]搜索模组需要 --instance，或者同时指定 --version 和 --loader[/red]")
+                exit(1)
+
+            try:
+                hits = modrinth.search(args.query, mc_version, loader, args.limit)
+            except RequestException as err:
+                console.print(f"[red][Network Error] 搜索失败，请检查网络或者代理设置: {err}[/red]")
+                exit(1)
+
+            if not hits:
+                console.print(f"没有找到适配 Minecraft {mc_version} / {loader} 的模组。")
+                exit(0)
+
+            result_table = Table(title=f"Modrinth 搜索结果（{mc_version} / {loader}）")
+            result_table.add_column("名称")
+            result_table.add_column("Slug")
+            result_table.add_column("下载量", justify="right")
+            result_table.add_column("说明")
+            for hit in hits:
+                description = (hit.get("description") or "").replace("\n", " ")
+                if len(description) > 50:
+                    description = description[:50] + "..."
+                result_table.add_row(hit.get("title", ""), hit.get("slug", ""),
+                                     f"{hit.get('downloads', 0):,}", description)
+            console.print(result_table)
+            console.print(f"安装：al mod install <slug> --instance \"{args.instance or '<实例名>'}\"")
+
+        elif args.mod_action == 'install':
+            try:
+                files = install_mod(args.slug, args.instance, args.version_id,
+                                    with_deps=not args.no_deps,
+                                    log=lambda text: console.print(text, markup=False, highlight=False))
+            except (ValueError, RuntimeError, RequestException, OSError) as err:
+                console.print(f"[red]安装失败：{err}[/red]")
+                exit(1)
+            console.print(f"[green]完成，共处理 {len(files)} 个模组文件。[/green]")
+            console.print(f"启动：al launch --instance \"{args.instance}\" --memory 8G")
+
+        elif args.mod_action == 'list':
+            try:
+                files = list_installed_mods(args.instance)
+            except ValueError as err:
+                console.print(f"[red]{err}[/red]")
+                exit(1)
+            if not files:
+                console.print("这个实例还没有安装任何模组。")
+                exit(0)
+            mods_table = Table(title=f"已安装模组（{args.instance}）")
+            mods_table.add_column("文件名")
+            mods_table.add_column("大小", justify="right")
+            for path in files:
+                mods_table.add_row(path.name, f"{path.stat().st_size / 1024 / 1024:.1f} MB")
+            console.print(mods_table)
+
+    elif args.command == 'login':
+        try:
+            console.print("正在向微软申请设备码 ...")
+            device = microsoft.request_device_code()
+            console.print(f"请在浏览器打开 [cyan]{device['verification_uri']}[/cyan]")
+            console.print(f"输入代码：[bold]{device['user_code']}[/bold]")
+            console.print("等待授权中（Ctrl+C 取消）...")
+            token = microsoft.poll_device_token(device)
+            console.print("授权成功，正在换取 Minecraft 令牌 ...")
+            account = microsoft.login_with_microsoft_token(token)
+            auth_store.save(account)
+        except microsoft.AuthError as err:
+            console.print(f"[red]登录失败：{err}[/red]")
+            exit(1)
+        except RequestException as err:
+            console.print(f"[red][Network Error] 登录请求失败，请检查网络或者代理设置: {err}[/red]")
+            exit(1)
+        except KeyboardInterrupt:
+            console.print("\n[yellow]已取消登录。[/yellow]")
+            exit(1)
+        console.print(f"[green]登录成功：{account['name']}[/green]（{account['uuid']}）")
+
+    elif args.command == 'logout':
+        if auth_store.load() is None:
+            console.print("当前没有登录的账号。")
+        else:
+            auth_store.clear()
+            console.print("[green]已退出正版账号。[/green]")
+
+    elif args.command == 'account':
+        account = auth_store.get_valid(log=console.print)
+        if account is None:
+            console.print("当前没有登录正版账号，使用 `al login` 登录。")
+            exit(0)
+        account_table = Table(title="当前账号")
+        account_table.add_column("项目")
+        account_table.add_column("值")
+        account_table.add_row("玩家名", account["name"])
+        account_table.add_row("UUID", account["uuid"])
+        account_table.add_row("类型", "微软正版")
+        account_table.add_row("令牌过期时间", account.get("expires_at", ""))
+        console.print(account_table)
+
     elif args.command == 'launch':
+        account = None
+        if not args.offline:
+            account = auth_store.get_valid(log=console.print)
+            if account is None:
+                console.print("[yellow]未登录正版账号，本次使用离线账号（登录：al login）。[/yellow]")
         if args.instance:
             meta = instance.load(args.instance)
             if meta is None:
                 console.print(f"[red]找不到实例：{args.instance}，可以用 `al instance list` 查看已导入的整合包[/red]")
                 exit(1)
             game_dir = instance.instance_dir(meta["folder"])
-            exit(_start_game(console, meta["version_id"], game_dir, args.memory))
+            exit(_start_game(console, meta["version_id"], game_dir, args.memory,
+                             account=account, username=args.username))
         if args.version:
-            exit(_start_game(console, args.version, Path(INSTANCES_DIR, args.version), args.memory))
+            exit(_start_game(console, args.version, Path(INSTANCES_DIR, args.version), args.memory,
+                             account=account, username=args.username))
         console.print("[red]请指定 --version（原版版本）或 --instance（整合包实例）[/red]")
         exit(1)
 
