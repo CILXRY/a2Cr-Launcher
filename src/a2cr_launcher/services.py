@@ -278,7 +278,12 @@ def launch_instance(folder: str, max_memory: str = "4G", name: str = "a2Cr",
     meta = instance.load(folder)
     status = meta.get("status")
     if status == "MetaNotExist":
-        raise LaunchError(f"找不到实例：{folder}")
+        # 实例页里显示的"未托管"目录：启动时顺手收养，用户不需要先点一次"修复"
+        if instance.instance_dir(folder).is_dir():
+            meta = instance.ensure(folder, meta.get("mc_version") or folder)
+            status = meta.get("status")
+        else:
+            raise LaunchError(f"找不到实例：{folder}")
     if status == "MetaBroken":
         raise LaunchError(f"实例元数据损坏，无法启动：{folder}")
 
