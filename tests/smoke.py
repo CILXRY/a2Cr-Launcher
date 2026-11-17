@@ -203,10 +203,35 @@ def test_download_cancel_before_start():
     assert not Path("never-downloaded.bin").exists()
 
 
+def test_instance_meta():
+    """实例元数据的几个纯逻辑点：目录名清洗、folder 必须是字符串、缺失状态的约定。"""
+    from a2cr_launcher import instance
+
+    assert instance.sanitize_name("生存 1.21") == "生存 1.21"
+    assert instance.sanitize_name('a/b:c*d?') == "a_b_c_d_"
+    assert instance.sanitize_name("") == "instance"
+    assert len(instance.sanitize_name("x" * 100)) == 64
+
+    meta = instance._meta_define("我的实例", "folder-name", "1.21.1", "1.21.1")
+    # 曾经这里被写成 (folder, Path) 元组，json 里会变成一个数组
+    assert meta["folder"] == "folder-name"
+    assert meta["name"] == "我的实例"
+    assert meta["loader"] == {"type": "vanilla", "version": ""}
+
+    adopted = instance._adopted_meta("26.2")
+    assert adopted["_adopted"] is True
+    assert adopted["version_id"] == "26.2"
+    assert adopted["status"] == "Success"
+
+    missing = instance.load("__a2cr_smoke_missing_instance__")
+    assert missing.get("status") == "MetaNotExist"
+
+
 def main() -> None:
     tests = [test_rules, test_feature_rule_list, test_imports, test_services,
              test_settings_normalize, test_ui_utils, test_import_detect_missing,
-             test_managed_entries, test_download_cancel_before_start]
+             test_managed_entries, test_download_cancel_before_start,
+             test_instance_meta]
     for test in tests:
         test()
         print(f"ok  {test.__name__}")

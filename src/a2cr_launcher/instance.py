@@ -35,6 +35,21 @@ def _new_instance_dir(name: str) -> tuple[str, Path]:
         index += 1
     return candidate, instance_dir(candidate)
 
+def _meta_define(name: str, folder: str, mc_version: str, version_id: str,
+                 loader: dict | None = None, source: dict | None = None) -> dict:
+    """只负责组装元数据，不做任何文件系统操作（folder 必须是已经确定好的目录名）。"""
+    return {
+        "name": name,
+        "folder": folder,
+        "mc_version": mc_version,
+        "version_id": version_id,
+        "loader": loader or {"type": "vanilla", "version": ""},
+        "source": source or {},
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        # 记录整合包托管了哪些文件；更新整合包时只清理这些文件，不碰玩家自己放进去的东西
+        "managed_files": [],
+    }
+
 
 def create(name: str, mc_version: str, version_id: str, loader: dict | None = None,
            source: dict | None = None) -> dict:
@@ -54,43 +69,83 @@ def create(name: str, mc_version: str, version_id: str, loader: dict | None = No
     folder, directory = _new_instance_dir(name)
     directory.mkdir(parents=True, exist_ok=True)
 
-    meta = {
-        "name": name,
-        "folder": folder,
-        "mc_version": mc_version,
-        "version_id": version_id,
-        "loader": loader or {"type": "vanilla", "version": ""},
-        "source": source or {},
-        "created_at": datetime.now().isoformat(timespec="seconds"),
-        # 记录整合包托管了哪些文件；更新整合包时只清理这些文件，不碰玩家自己放进去的东西
-        "managed_files": [],
-    }
+    meta = _meta_define(name, folder, mc_version, version_id, loader, source)
     with open(Path(directory, META_FILE), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
     return meta
 
 
-def load(name: str) -> dict | None:
-    """按名字或目录读取实例元数据，不存在返回 None。"""
-    directory = instance_dir(name)
-    meta_path = Path(directory, META_FILE)
+def load(name: str) -> dict:
+    """
+    按照 实例名/实例目录，读取实例元数据
+    Args:
+        name (str): 实例名/实例目录
+
+    Returns:
+        dict: 实例所存储的元数据，.get("status", None) 获取实例元数据状态
+    """
+    instance_directory = Path(INSTANCES_DIR, name)
+    meta_path = Path(instance_directory, META_FILE)
+
+    # region 确认是否存在文件
+    meta_exists = meta_path.is_file()
+    if not meta_exists:
+        return {"status": "MetaNotExist"}
+    # endregion
+
+    # region 尝试读取文件
     try:
         # utf-8-sig：兼容用记事本改过、带 BOM 的 instance.json
         with open(meta_path, "r", encoding="utf-8-sig") as f:
             meta = json.load(f)
+    # endregion
+
+    # region 处理非 Dict 的情况
     except (OSError, json.JSONDecodeError):
-        return None
+        return {"status": "MetaBroken"}
     if not isinstance(meta, dict):
-        return None
+        return {"status": "MetaBroken"}
+    # endregion
+
+    # region 默认值
+    meta.setdefault("status", "Success")
     meta.setdefault("folder", name)
     meta.setdefault("loader", {"type": "vanilla", "version": ""})
     meta.setdefault("source", {})
     meta.setdefault("managed_files", [])
+    # endregion
+
     return meta
 
 
+def _adopted_meta(name: str) -> dict:
+    """给没有 instance.json 的目录合成一份"未托管实例"元数据（只读，不写盘）。
+
+    早期版本启动原版时直接在 instances/<版本号> 下建游戏目录、不写元数据，
+    于是这些目录永远不出现在实例列表里。这里让它们能被看见；
+    真正补写 instance.json 发生在 ensure() 里。
+    """
+    return {
+        "status": "Success",
+        "name": name,
+        "folder": name,
+        "mc_version": name,
+        "version_id": name,
+        "loader": {"type": "vanilla", "version": ""},
+        "source": {"format": "adopted"},
+        "created_at": "",
+        "managed_files": [],
+        "_adopted": True,
+    }
+
+
 def list_all() -> list[dict]:
-    """列出所有实例（按名字排序）。"""
+    """列出所有实例（按名字排序）。
+
+    - 正常：instance.json 可读（status == "Success"）
+    - 未托管（_adopted=True）：目录里没有 instance.json，按目录名推断成原版实例
+    - 损坏（_broken=True）：instance.json 存在但读不出来，保留现场，绝不覆盖
+    """
     result = []
     try:
         folders = sorted(Path(INSTANCES_DIR).iterdir())
@@ -100,9 +155,54 @@ def list_all() -> list[dict]:
         if not folder.is_dir():
             continue
         meta = load(folder.name)
-        if meta is not None:
+        status = meta.get("status")
+        if status == "MetaBroken":
+            broken = _adopted_meta(folder.name)
+            broken.pop("_adopted", None)
+            broken["_broken"] = True
+            broken["status"] = "MetaBroken"
+            broken["source"] = {"format": "broken"}
+            result.append(broken)
+        elif status == "Success":
             result.append(meta)
+        else:
+            result.append(_adopted_meta(folder.name))
     return result
+
+
+def ensure(version_id: str, mc_version: str | None = None) -> dict:
+    """保证 instances/<version_id> 是一个可用实例，返回它的元数据。
+
+    - 已有且版本对得上 → 直接返回
+    - 目录存在但没有元数据 → 收养（补写 instance.json，source.format = adopted）
+    - 目录不存在 → 新建
+    - 同名目录属于别的版本 → 自动加后缀，不覆盖
+    - 元数据损坏 → 抛 ValueError，交给用户处理
+    """
+    meta = load(version_id)
+    status = meta.get("status")
+
+    if status == "MetaBroken":
+        raise ValueError(
+            f"实例元数据损坏，请手动修复或删除：{Path(instance_dir(version_id), META_FILE)}"
+        )
+
+    if status == "Success":
+        if meta.get("version_id") == version_id:
+            return meta
+        # 目录名被别的实例占用了，换一个名字
+        return create(name=version_id, mc_version=mc_version or version_id, version_id=version_id)
+
+    base = mc_version or version_id
+    directory = instance_dir(version_id)
+    if directory.is_dir():
+        adopted = _adopted_meta(version_id)
+        adopted.pop("_adopted", None)
+        adopted["mc_version"] = base
+        save(adopted)
+        return adopted
+
+    return create(name=version_id, mc_version=base, version_id=version_id)
 
 
 def find_by_source(file: str) -> dict | None:
