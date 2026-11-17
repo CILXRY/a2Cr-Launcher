@@ -140,9 +140,23 @@ def list_instances() -> list[dict]:
             "loader_version": loader.get("version", ""),
             "source_format": (meta.get("source") or {}).get("format", ""),
             "mods_count": mods_count,
+            "status": meta.get("status", "Success"),
+            "adopted": bool(meta.get("_adopted")),
+            "broken": bool(meta.get("_broken")),
         })
         result.append(item)
     return result
+
+
+def create_instance(name: str, version_id: str, mc_version: str | None = None) -> dict:
+    """新建一个实例（原版或已安装的加载器版本）。
+
+    调用方负责确保 version_id 已经安装；这里不触发下载。
+    """
+    ensure_data_dirs()
+    base = mc_version or resolve_meta(version_id).get("_baseVersion", version_id)
+    display = (name or "").strip() or version_id
+    return instance.create(name=display, mc_version=base, version_id=version_id)
 
 
 def inspect_modpack(path: str | Path) -> dict:
@@ -247,17 +261,31 @@ def _launch(version_id: str, game_dir: Path, max_memory: str = "4G", name: str =
 
 def launch_version(version_id: str, max_memory: str = "4G", name: str = "a2Cr",
                    on_log=None, on_process=None, java_path: str | None = None) -> int:
-    """启动一个原版/已安装版本，返回游戏进程退出码（会阻塞到游戏退出）。"""
-    return _launch(version_id, Path(INSTANCES_DIR, version_id), max_memory=max_memory, name=name,
-                   on_log=on_log, on_process=on_process, java_path=java_path)
+    """启动一个原版/已安装版本，返回游戏进程退出码（会阻塞到游戏退出）。
+
+    会先确保这个版本对应一个实例（没有就创建一个），然后走统一的实例启动流程。
+    """
+    ensure_data_dirs()
+    base = resolve_meta(version_id).get("_baseVersion", version_id)
+    meta = instance.ensure(version_id, base)
+    return launch_instance(meta["folder"], max_memory=max_memory, name=name,
+                           on_log=on_log, on_process=on_process, java_path=java_path)
 
 
 def launch_instance(folder: str, max_memory: str = "4G", name: str = "a2Cr",
                     on_log=None, on_process=None, java_path: str | None = None) -> int:
-    """启动一个整合包实例，游戏目录就是实例目录。"""
+    """启动一个实例，游戏目录就是实例目录。"""
     meta = instance.load(folder)
-    if meta is None:
-        raise LaunchError(f"找不到实例：{folder}")
+    status = meta.get("status")
+    if status == "MetaNotExist":
+        # 实例页里显示的"未托管"目录：启动时顺手收养，用户不需要先点一次"修复"
+        if instance.instance_dir(folder).is_dir():
+            meta = instance.ensure(folder, meta.get("mc_version") or folder)
+            status = meta.get("status")
+        else:
+            raise LaunchError(f"找不到实例：{folder}")
+    if status == "MetaBroken":
+        raise LaunchError(f"实例元数据损坏，无法启动：{folder}")
 
     def _started(proc):
         # 进程真正创建后再记录最近游玩时间，启动失败（比如 Java 缺失）不会污染排序

@@ -1,10 +1,8 @@
 # 接口契约
 
-这份文档的目的只有一个：**防止两个人（或两个 AI）把同一件事写出两套实现。**
+这份文档的目的只有一个： **防止两个人（或两个 AI）把同一件事写出两套实现。**
 
 改这里的任何签名之前，先在群里说一声，改完顺手更新本文件。
-
----
 
 ## 一、冻结的接口
 
@@ -13,11 +11,11 @@
 ```python
 # core/download.py
 def download(
-    targets: list[tuple[str, Path, str, int]],
-    *,
-    show_progress: bool = True,
-    description: str = "下载文件",
-    on_progress: Callable[[int, int, str, str], None] | None = None,
+        targets: list[tuple[str, Path, str, int]],
+        *,
+        show_progress: bool = True,
+        description: str = "下载文件",
+        on_progress: Callable[[int, int, str, str], None] | None = None,
 ) -> bool:
 ```
 
@@ -57,21 +55,23 @@ def launch(cmd: list[str], game_dir: Path, on_log=None, on_process=None) -> int:
 
 ```python
 # services.py
-def list_installed() -> list[str]              # 返回版本号，不是路径
-def list_installed_versions() -> list[dict]    # 原版 + 加载器版本，读本地 JSON
-def list_instances() -> list[dict]             # 整合包实例，附带 path/loader/mods_count
-def inspect_modpack(path) -> dict              # 只解析不安装，给导入预检
+def list_installed() -> list[str]                  # 返回版本号，不是路径
+def list_installed_versions() -> list[dict]        # 原版 + 加载器版本，读本地 JSON
+def list_instances() -> list[dict]                 # 实例列表，附带 path/loader/mods_count/adopted/broken
+def create_instance(name, version_id, mc_version=None) -> dict   # 新建原版/加载器实例
+def inspect_modpack(path) -> dict                  # 只解析不安装，给导入预检
 def import_modpack(path, name=None, *, on_log=None, on_progress=None, cancel=None,
                    update_folder=None) -> dict
 def list_versions(version_type="release", limit=0) -> list[dict]
 def list_java_runtimes() -> list[dict]
 def install_version(version_id, on_progress=None, cancel=None) -> bool
 def launch_version(version_id, max_memory="4G", name="a2Cr", on_log=None,
-                   on_process=None, java_path=None) -> int
+                   on_process=None, java_path=None) -> int   # 会先确保实例存在
 def launch_instance(folder, max_memory="4G", name="a2Cr", on_log=None,
                     on_process=None, java_path=None) -> int
 def trash_instance(folder) -> Path
-def load_settings() / save_settings(...) -> dict
+def load_settings() -> dict
+def save_settings(...) -> dict
 ```
 
 `services.py` 是 UI 唯一允许依赖的模块。UI 不许直接 import `core/`、`meta/`、`launch/`。
@@ -94,7 +94,7 @@ on_progress(stage: str, done: int, total: int, detail: str)
 `download(..., cancel=callable)` 和 `install(..., cancel=callable)` 在取消时抛出
 `core.download.DownloadCancelled`（属于 `RuntimeError` 子类）。`services.py` 会把它
 重新导出为 `services.DownloadCancelled`，UI 只能从这里捕获——不要在 `ui/` 里直接
-import `core/`。上层必须**先**捕获它，不要把它当成普通下载失败包一层 `RuntimeError`，
+import `core/`。上层必须 **先**捕获它，不要把它当成普通下载失败包一层 `RuntimeError`，
 否则界面无法区分“取消”和“失败”。已写入的 `.part` 文件会保留，下次继续续传。
 
 ### 版本元数据
@@ -104,9 +104,7 @@ import `core/`。上层必须**先**捕获它，不要把它当成普通下载�
 def get_version_meta(version_id: str, refresh: bool = False) -> dict
 ```
 
-必须返回**完整的版本 JSON**（含 `libraries`、`arguments`、`logging`、`downloads`、`assetIndex`），不要只返回摘要——拼参数时每一段都会被用到。
-
----
+必须返回 **完整的版本 JSON**（含 `libraries`、`arguments`、`logging`、`downloads`、`assetIndex`），不要只返回摘要——拼参数时每一段都会被用到。
 
 ## 二、约定
 
@@ -116,21 +114,7 @@ def get_version_meta(version_id: str, refresh: bool = False) -> dict
 4. **底层不 print**：`core/`、`meta/`、`launch/`、`java/` 里不许出现 `print`；输出由 `cli.py` / `ui/` 负责。
 5. **一种实现**：同一个功能（进度、重试、磁盘校验）只准有一套代码。发现重复，先合并再继续。
 
----
-
-## 三、目录归属
-
-| 目录 | 负责人 | 说明 |
-|---|---|---|
-| `core/` `meta/` `launch/` `java/` | 见群 | 改动前通知另一位 |
-| `ui/` `services.py` | 界面负责人 | 另一方一般不动 |
-| `cli.py` | 共用 | 改子命令先说一声 |
-
-改别人负责的目录：**先打招呼，再动手。** 不要静默改完甩一个 PR。
-
----
-
-## 四、验证底线
+## 三、验证
 
 任何 PR 合入前，这三条必须能跑通：
 
@@ -145,3 +129,24 @@ uv run al install --version <某个已装版本>   # 幂等：第二次应全是
 ```powershell
 uv run al-gui                        # 窗口能开、能启动、不卡死
 ```
+
+## 四、领域模型
+
+```
+版本 (version)   = 官方元数据里的一坨文件，装在 versions/<id>，只读概念
+实例 (instance)  = 一份可启动的游戏目录 + 元数据 instances/<folder>/instance.json
+整合包 (modpack) = 生成实例的一种来源，不参与运行
+```
+
+任何启动都必须经过实例。`launch_version` 只是"确保实例存在后调用 `launch_instance`"。
+
+实例元数据有三种状态（`instance.load()` 返回 `status`）：
+
+| status | 含义 | 处理方式 |
+|---|---|---|
+| `Success` | 正常 | 直接用 |
+| `MetaNotExist` | 目录存在但没有 `instance.json` | 列表里按"未托管"显示；`instance.ensure()` 会收养并补写 |
+| `MetaBroken` | 文件存在但解析失败 | **绝不覆盖**，界面提示用户手动处理 |
+
+已安装但没被启动过的版本，会在第一次启动时由 `instance.ensure()` 自动变成一个实例。
+实例列表里的"未托管"目录（没有 `instance.json`）在点击启动时也会被顺手收养，不需要用户手动修复。
