@@ -1,6 +1,6 @@
 [project]
 name = "a2cr-launcher"
-version = "0.3.2-beta"
+version = "0.3.2-beta.1"
 description = "Add your description here"
 readme = "README.md"
 authors = [
