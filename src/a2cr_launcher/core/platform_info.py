@@ -2,16 +2,17 @@ from platform import system, machine
 
 
 def current_platform() -> tuple[str, str]:
-    cur_system = system()
-    cur_arch = machine()
-    if cur_system == "Windows":
-        cur_system = "windows"
-    elif cur_system == "Darwin":
-        cur_system = "osx"
-    elif cur_system == "Linux":
-        cur_system = "linux"
-    else:
-        cur_system = "unknown"
+    cur_system, cur_arch = system(), machine()
+
+    match cur_system:
+        case "Windows":
+            cur_system = "windows"
+        case "Darwin":
+            cur_system = "osx"
+        case "Linux":
+            cur_system = "linux"
+        case _:
+            cur_system = "unknown"
 
     if cur_arch == "AMD64" or cur_arch == "x86_64":
         cur_arch = "x86_64"
