@@ -15,7 +15,7 @@ from pathlib import Path
 import flet as ft
 
 from a2cr_launcher import services
-
+from a2cr_launcher.services import get_launcher_version_code
 from . import components as ui
 from . import theme
 from .dialogs import ImportDialog, show_error
@@ -30,8 +30,6 @@ NAV_ITEMS = (
     ("logs", "日志", ft.Icons.TERMINAL_ROUNDED, ft.Icons.TERMINAL_OUTLINED),
     ("settings", "设置", ft.Icons.SETTINGS_ROUNDED, ft.Icons.SETTINGS_OUTLINED),
 )
-
-APP_VERSION = "0.3.0"
 
 
 class LauncherApp:
@@ -222,8 +220,8 @@ class LauncherApp:
                 ui.block_logo(36),
                 ft.Column(
                     controls=[
-                        ft.Text("a2Cr", size=19, weight=ft.FontWeight.W_800, color=p.text),
-                        ft.Text("Launcher", size=10, color=p.text_faint),
+                        ft.Text("a2Cr Launcher", size=19, weight=ft.FontWeight.W_800, color=p.text),
+                        ft.Text("Powered by Flet", size=10, color=p.text_faint),
                     ],
                     spacing=-2,
                 ),
@@ -263,7 +261,7 @@ class LauncherApp:
                                        lambda e: self.cycle_theme()),
                     ],
                 ),
-                ft.Text(f"v{APP_VERSION}", size=10, color=p.text_faint),
+                ft.Text(f"v{get_launcher_version_code()}", size=10, color=p.text_faint),
             ],
             spacing=6,
         )

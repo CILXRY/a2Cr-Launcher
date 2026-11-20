@@ -7,12 +7,17 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
+from a2cr_launcher import __version__ as _source_version
 from a2cr_launcher import instance, settings
+# UI 捕获的是 ``services.DownloadCancelled``。这里必须重新导出：一旦删掉，
+# 用户取消下载会变成 AttributeError，真正的错误被盖住。
 from a2cr_launcher.core.download import DownloadCancelled
 from a2cr_launcher.core.paths import (
     ASSETS_DIR,
@@ -335,3 +340,34 @@ def open_instance_log(folder: str) -> None:
     directory = instance.instance_dir(folder)
     log_file = Path(directory, "logs", "latest.log")
     open_path(log_file if log_file.is_file() else directory)
+
+
+_PEP440_PRERELEASE = re.compile(r"^(?P<base>\d+(?:\.\d+)*)(?P<kind>a|b|rc)(?P<number>\d+)$")
+_PRERELEASE_LABELS = {"a": "alpha", "b": "beta", "rc": "rc"}
+
+
+def _display_version(raw: str) -> str:
+    """把 PEP 440 的预发布版本还原成发布标签的写法。
+
+    ``pyproject.toml`` 里写的是 ``0.3.2-beta``，但打包时会规范化成 ``0.3.2b0``。
+    界面直接显示后者，用户会以为版本号写错了。
+    """
+    match = _PEP440_PRERELEASE.match(raw.strip())
+    if match is None:
+        return raw
+    label = _PRERELEASE_LABELS[match.group("kind")]
+    number = int(match.group("number"))
+    suffix = label if number == 0 else f"{label}.{number}"
+    return f"{match.group('base')}-{suffix}"
+
+
+def get_launcher_version_code() -> str:
+    """界面展示的启动器版本。
+
+    Flet 打包产物里没有安装元数据，读不到时退回包内 ``__version__``。
+    """
+    try:
+        raw = version("a2cr-launcher")
+    except PackageNotFoundError:
+        raw = _source_version
+    return _display_version(raw)
