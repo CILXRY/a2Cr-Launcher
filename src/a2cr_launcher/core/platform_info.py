@@ -1,5 +1,7 @@
 from platform import system, machine
 
+import psutil
+
 
 def current_platform() -> tuple[str, str]:
     cur_system, cur_arch = system(), machine()
@@ -23,3 +25,20 @@ def current_platform() -> tuple[str, str]:
     else:
         cur_arch = "unknown"
     return cur_system, cur_arch
+
+
+def system_info() -> dict:
+    """给设置页展示的机器资源，单位 GiB。
+
+    ``disk_usage`` 只统计当前盘符：整合包可能放在别的盘，这里不假装是整机容量。
+    """
+    memory = psutil.virtual_memory()
+    gib = 1024 ** 3
+    return {
+        "ram": {
+            "total": memory.total / gib,
+            "used": memory.used / gib,
+            "available": memory.available / gib,
+        },
+        "disk": psutil.disk_usage("/").total / gib,
+    }
