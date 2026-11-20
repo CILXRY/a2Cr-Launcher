@@ -23,3 +23,9 @@ aL/
 
 # 打包/日志产物
 *.log
+
+# .NET
+**/bin/
+**/obj/
+.vs/
+*.user
