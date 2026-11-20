@@ -17,6 +17,7 @@ dependencies = [
 [package.dev-dependencies]
 lint = [
     { name = "pyrefly" },
+    { name = "types-psutil" },
 ]
 
 [package.metadata]
@@ -29,7 +30,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-lint = [{ name = "pyrefly", specifier = "==1.4.1" }]
+lint = [
+    { name = "pyrefly", specifier = "==1.4.1" },
+    { name = "types-psutil" },
+]
 
 [[package]]
 name = "anyio"
@@ -402,6 +406,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+]
+
+[[package]]
+name = "types-psutil"
+version = "7.2.2.20261111"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9c/30/9eb9f10b074aa0cb3456ad3469716169d0af6de58096719f31cb065aac68/types_psutil-7.2.2.20261111.tar.gz", hash = "sha256:d677119c44fb80cc9be41d8ac731f08bf89974bb1daa49b6688665a9d7224f42", size = 27439, upload-time = "2026-11-11T08:32:33.155Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/c2/6a9d0b3e4f55ad008891dda1f9316b077f28c22274c58869f8047f7d6b74/types_psutil-7.2.2.20261111-py3-none-any.whl", hash = "sha256:054f7b635fc908d3d27e49e8d274fbfed115a1a859f2edeae17519c0238286a1", size = 33394, upload-time = "2026-11-11T08:32:32.097Z" },
 ]
 
 [[package]]

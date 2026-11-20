@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-lint = ["pyrefly==1.4.1"]
+lint = ["pyrefly==1.4.1", "types-psutil"]
 
 [project.scripts]
 al = "a2cr_launcher:main"
