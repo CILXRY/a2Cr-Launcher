@@ -1,5 +1,8 @@
 # 图形界面结构
 
+> **v1 已冻结。** 本文只描述当前的 Flet 界面，v2 会换成 Avalonia，
+> 界面结构以 `docs/a2Cr Launcher 2 Contracts/` 为准。
+
 界面使用 Flet 1.1.2 的桌面模式，入口仍然是 `al-gui`（`a2cr_launcher.ui.gui:run`）。
 
 ## 目录

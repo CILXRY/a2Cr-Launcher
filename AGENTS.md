@@ -10,6 +10,9 @@
   （`a2cr_launcher.ui.gui`）。
 - 主分支：`elegant`。
 - 启动器数据默认在 `~/.a2CrLauncher`；可用环境变量 `A2CR_ROOT` 整体覆盖。
+- **v1 已冻结（2026-11）**：只修 bug，不再加功能。下一代 v2 用 C# / Avalonia
+  重写，设计契约在 `docs/a2Cr Launcher 2 Contracts/`（`00-索引.md` 起步）。
+  新需求先确认是否属于 v2，不要往 v1 里塞。
 
 ## 常用命令
 
@@ -18,6 +21,7 @@ uv sync
 uv run python -m tests.smoke      # 离线冒烟测试，必须全绿
 uv run al --help                  # CLI 至少能起来
 uv run al-gui                     # 打开 GUI
+uv run --group lint pyrefly check # 内核类型检查（ui/ 不在范围内，见 pyproject.toml）
 ```
 
 在受限环境里 `uv` 缓存可能不可写，可以直接用项目虚拟环境：
@@ -132,6 +136,14 @@ uv run al --help
 
 ## 当前状态（2026-11）
 
+- **v1 收尾完成，tag 为 `v1-final`**。之后只接受 bugfix，不再合入新功能。
+- 版本号有两处：`pyproject.toml` 的 `version`（发布/打包用）和
+  `a2cr_launcher/__init__.py` 的 `__version__`（没有安装元数据时界面兜底）。
+  改版本时两处一起改；`uv lock` 只管依赖，不会帮你同步版本号。
+- `services.DownloadCancelled` 是冻结接口（UI 用它捕获取消），
+  `tests/smoke.py` 里有专门的回归用例，不要删这个重新导出。
+- `pyrefly` 只检查内核（`core/meta/launch/java/modloader/modpack/mods/auth`
+  以及 `instance/settings/services`），`ui/` 和 `cli.py` 的类型噪音留到 v2。
 - issue #4：已修复，首次启动自动创建目录并显示失败兜底页。
 - issue #7：已实现 GUI 导入和整合包更新。
 - 整合包更新用 `managed_files` 记录托管文件，只删除哈希未变的旧文件。
