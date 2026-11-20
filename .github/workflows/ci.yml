@@ -5,6 +5,15 @@ on:
     branches: [elegant]
   pull_request:
     branches: [elegant]
+  # v1 已冻结，但收尾分支/改动仍需要能手动跑一次
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   smoke:
@@ -17,7 +26,11 @@ jobs:
           enable-cache: true
 
       - name: 安装依赖
-        run: uv sync
+        run: uv sync --locked
+
+      - name: 类型检查（内核）
+        # pyrefly 只检查 core/meta/launch/java/modpack/...，ui/ 的类型噪音随 v2 重写消失
+        run: uv run --group lint pyrefly check
 
       - name: 离线冒烟测试
         run: uv run python -m tests.smoke

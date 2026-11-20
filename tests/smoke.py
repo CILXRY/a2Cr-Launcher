@@ -47,6 +47,9 @@ RULE_CASES = [
     # 规则要求 False 也必须能正确匹配
     ([{"action": "allow", "features": {"has_custom_resolution": False}}],
      "windows", "x86_64", {}, True),
+    # 调用方不传 features（jvm 参数就是这样）时不能崩，按“未启用”处理
+    ([{"action": "allow", "features": {"is_demo_user": True}}],
+     "windows", "x86_64", None, False),
 ]
 
 FEATURE_ITEMS = [
@@ -227,11 +230,30 @@ def test_instance_meta():
     assert missing.get("status") == "MetaNotExist"
 
 
+def test_services_reexports_download_cancelled():
+    """UI 捕获的是 services.DownloadCancelled；重新导出丢了，取消会变成 AttributeError。"""
+    from a2cr_launcher import services
+    from a2cr_launcher.core.download import DownloadCancelled
+
+    assert services.DownloadCancelled is DownloadCancelled
+
+
+def test_launcher_version_display():
+    """PEP 440 的 0.3.2b0 要显示成发布标签的 0.3.2-beta。"""
+    from a2cr_launcher.services import _display_version, get_launcher_version_code
+
+    assert _display_version("0.3.2b0") == "0.3.2-beta"
+    assert _display_version("0.3.2") == "0.3.2"
+    assert _display_version("0.4.0rc1") == "0.4.0-rc.1"
+    assert get_launcher_version_code()
+
+
 def main() -> None:
     tests = [test_rules, test_feature_rule_list, test_imports, test_services,
              test_settings_normalize, test_ui_utils, test_import_detect_missing,
              test_managed_entries, test_download_cancel_before_start,
-             test_instance_meta]
+             test_instance_meta, test_services_reexports_download_cancelled,
+             test_launcher_version_display]
     for test in tests:
         test()
         print(f"ok  {test.__name__}")

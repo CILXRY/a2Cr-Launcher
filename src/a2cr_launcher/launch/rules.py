@@ -14,6 +14,8 @@ def _rule_matches(target_rule, current_os, current_features=None):
     """
     target_os_rule: dict = target_rule.get("os", {})  # 存放系统规则
     target_features: dict = target_rule.get("features", {})  # 存放功能规则
+    # 调用方经常不传 features（例如 arguments 里的 jvm 参数），不能假设它一定是 dict
+    current_features = current_features or {}
 
     if target_os_rule:
         if "name" in target_os_rule and target_os_rule["name"] != current_os[0]: return False  # 判断系统规则
@@ -62,6 +64,7 @@ def feature_rule_list(target_rules, os_name, os_arch, current_features, variable
         list: feature 参数集
     """
     args = []
+    variables = variables or {}
     for item in target_rules:
         if not is_allowed(item.get("rules", []), os_name, os_arch, current_features):
             continue

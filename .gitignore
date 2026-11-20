@@ -12,3 +12,14 @@ __pycache__/
 # IDE File
 .idea
 .vscode
+
+# 本地演示数据与临时产物（AGENTS.md 约定：不要提交 artifacts/）
+artifacts/
+aL/
+
+# 测试缓存
+.pytest_cache/
+.coverage
+
+# 打包/日志产物
+*.log

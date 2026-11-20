@@ -5,6 +5,7 @@ from __future__ import annotations
 import flet as ft
 
 from ... import services
+from ...services import get_launcher_version_code
 from ...ui import components as ui
 from ...ui.utils import memory_gb, shorten_path
 
@@ -322,7 +323,7 @@ def _about_section(app) -> ft.Container:
                         spacing=2,
                         expand=True,
                     ),
-                    ui.pill("v0.3.0", color=p.accent, bgcolor=p.accent_soft),
+                    ui.pill(f"{get_launcher_version_code()}", color=p.accent, bgcolor=p.accent_soft),
                 ],
                 spacing=12,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,

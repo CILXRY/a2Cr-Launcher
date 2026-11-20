@@ -2,6 +2,10 @@
 
 尽管这只是一个个人练习项目，但仍然对你的贡献予以感谢。
 
+> **v1（Python + Flet）已冻结**，只接受 bugfix。新功能请按
+> [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)
+> 的 v2（C# / Avalonia）契约来做。
+
 ## 从 要做什么 开始
 
 这里➡️ 是 [项目 Issues](https://github.com/CILXRY/a2cr-Launcher/issues)，  
@@ -61,6 +65,7 @@ uv run python -m tests.smoke   # 冒烟测试，必须全绿
 ### 5. 提交前自检（硬性）
 
 ```powershell
+uv run --group lint pyrefly check   # 0. 内核类型检查 0 errors
 uv run python -m tests.smoke        # 1. 冒烟测试全绿
 uv run al --help                    # 2. CLI 能起来
 uv run al install --version <已装版本>   # 3. 幂等：第二次全 skipped

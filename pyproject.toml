@@ -1,19 +1,24 @@
 [project]
 name = "a2cr-launcher"
 version = "0.3.2-beta"
-description = "Add your description here"
+description = "A minimal Minecraft Launcher"
 readme = "README.md"
 authors = [
-    { name = "Rxxd", email = "cilxry@outlook.com" }
+    { name = "Rxxd", email = "cilxry@outlook.com" },
+    { name = "turelove1", email = "2915053735@qq.com" },
+    { name = "NebulaLeaf", email = "96852641+annezfz@users.noreply.github.com" }
 ]
 requires-python = ">=3.14"
 dependencies = [
     "flet==1.1.2",
     "flet-desktop==1.1.2",
-    "pyrefly==1.4.1",
+    "psutil>=7.2.2",
     "requests>=2.34.2",
     "rich>=15.0.0",
 ]
+
+[dependency-groups]
+lint = ["pyrefly==1.4.1", "types-psutil"]
 
 [project.scripts]
 al = "a2cr_launcher:main"
@@ -23,11 +28,29 @@ al-gui = "a2cr_launcher.ui.gui:run"
 requires = ["uv_build>=0.12.16,<0.13.0"]
 build-backend = "uv_build"
 
+[tool.pyrefly]
+# v1 已冻结：只检查即将移植到 v2 的内核。
+# ui/ 和 cli.py 有大量 Flet 类型噪音（IconData/str 之类），随 v2 重写一起消失。
+project_includes = [
+    "src/a2cr_launcher/core",
+    "src/a2cr_launcher/meta",
+    "src/a2cr_launcher/launch",
+    "src/a2cr_launcher/java",
+    "src/a2cr_launcher/modloader",
+    "src/a2cr_launcher/modpack",
+    "src/a2cr_launcher/mods",
+    "src/a2cr_launcher/auth",
+    "src/a2cr_launcher/instance.py",
+    "src/a2cr_launcher/settings.py",
+    "src/a2cr_launcher/services.py",
+    "tests",
+]
+
 [tool.flet]
 org = "cc.cilxry"
 company = "cilxry"
 product = "a2Cr Launcher"
-build_version = "0.3.0"
+build_version = "0.3.2"
 build_number = 1
 
 [tool.flet.app]
