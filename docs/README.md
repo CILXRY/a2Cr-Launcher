@@ -6,6 +6,7 @@
 |---|---|
 | 知道这个项目为什么存在、做给谁用 | [产品想法](产品想法.md) |
 | 动手写 v2 的代码，先确认接口和磁盘布局 | [契约索引](contracts/00-索引.md) |
+| 弄明白"什么算合格"（提交、命名、测试、发布） | [Git](conventions/git.md) / [代码](conventions/code.md) / [测试](conventions/tests.md) / [发布](conventions/release.md) |
 | 配开发环境、找某个答案 | [新人上手](guides/00-Intro.md) |
 | 看这个项目踩过哪些坑、怎么学的 | [学习笔记](learning/README.md) |
 
@@ -15,6 +16,7 @@
 docs/
 ├─产品想法.md          ← 为什么做；判断功能该不该做的依据
 ├─contracts/           ← 怎么做；v2 的唯一事实来源，改代码前先读
+├─conventions/         ← 硬规矩：git / 代码 / 测试 / 发布
 ├─guides/              ← 环境配置、如何自己找答案
 ├─learning/            ← 学习笔记（Avalonia / C# / 排查方法）
 └─screenshots/         ← v1 界面截图，README 用
