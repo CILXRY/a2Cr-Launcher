@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using a2Cr.app.ViewModels;
-using a2Cr.app.Views;
+using a2Cr.App.ViewModels;
+using a2Cr.App.Views;
 
-namespace a2Cr.app;
+namespace a2Cr.App;
 
 public partial class App : Application
 {

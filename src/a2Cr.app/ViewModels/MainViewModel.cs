@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace a2Cr.app.ViewModels;
+namespace a2Cr.App.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {

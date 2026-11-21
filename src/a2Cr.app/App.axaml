@@ -1,8 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:themes="clr-namespace:ShadUI;assembly=ShadUI"
-             x:Class="a2Cr.app.App"
-             xmlns:local="using:a2Cr.app"
+             x:Class="a2Cr.App.App"
+             xmlns:local="using:a2Cr.App"
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 

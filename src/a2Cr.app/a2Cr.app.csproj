@@ -4,9 +4,9 @@
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <RootNamespace>a2Cr.app</RootNamespace>
-        <AssemblyName>a2Cr.app</AssemblyName>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <RootNamespace>a2Cr.App</RootNamespace>
+        <AssemblyName>a2Cr.App</AssemblyName>
+        <ApplicationManifest>App.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets\avalonia-logo.ico</ApplicationIcon>
     </PropertyGroup>

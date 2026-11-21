@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using System;
 
-namespace a2Cr.app;
+namespace a2Cr.App;
 
 sealed class Program
 {

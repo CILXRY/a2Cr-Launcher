@@ -2,9 +2,9 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using a2Cr.app.ViewModels;
+using a2Cr.App.ViewModels;
 
-namespace a2Cr.app;
+namespace a2Cr.App;
 
 /// <summary>
 /// Given a view model, returns the corresponding view if possible.
