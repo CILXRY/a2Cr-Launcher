@@ -1,25 +1,37 @@
-# Python Generated Files
+# ---- Python（legacy/v1-python）----
 dist/
 build/
 wheels/
 __pycache__/
 *.py[oc]
 *.egg-info
+.venv/
 
-# Virtual Environments
-.venv
+# ---- C# / .NET ----
+bin/
+obj/
+.vs/
+*.user
+*.DotSettings.user
+*.suo
+project.lock.json
+*.nupkg
 
-# IDE File
-.idea
-.vscode
+# ---- Flet ----
+.flet/
+flet-build/
 
-# 本地演示数据与临时产物（AGENTS.md 约定：不要提交 artifacts/）
+# ---- IDE ----
+.idea/
+.vscode/
+
+# ---- 本地演示数据与临时产物（不要提交）----
 artifacts/
 aL/
 
-# 测试缓存
+# ---- 测试缓存 ----
 .pytest_cache/
 .coverage
 
-# 打包/日志产物
+# ---- 日志 ----
 *.log
