@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/a2Cr.App/a2Cr.App.csproj" />
+  <Project Path="src/a2Cr.Cli/a2Cr.Cli.csproj" />
+</Solution>
