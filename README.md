@@ -1,16 +1,17 @@
 # a2Cr Launcher
 
-一个使用 Python 制作的 Minecraft 启动器（CLI + 图形界面）
+**一个为多版本而优化的 Minecraft 启动器。** 关注的是"同一个玩家在多个版本、多个整合包之间来回切换"的摩擦，而不只是"装得上、跑得起来"。
 
-> **项目状态（2026-11）**
-> v1（Python + Flet）已冻结，最后一个版本对应 tag `v1-final`，之后只修 bug。
-> 下一代 v2 正在用 C# / Avalonia 重写，设计契约见
-> [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)。
-> 下面的内容描述的是 v1 的用法。
+个人学习项目：从 Python 写到 C#，边写边学。
+
+> **当前状态（2026-11）**
+> - **v1（Python + Flet）已冻结**，最后一个版本是 tag `v1-final`，代码归档在 [`legacy/v1-python/`](legacy/v1-python/README.md)，只修致命 bug。
+> - **v2（C# + Avalonia）在设计阶段**，契约已定，代码还没开始写，见 [`docs/contracts/`](docs/contracts/00-索引.md)。
+> - 下面的截图全部是 v1 的界面。
 
 ![首页](docs/screenshots/home-dark.png)
 
-## 界面预览
+## 界面预览（v1）
 
 | 实例 | 版本 |
 |---|---|
@@ -20,116 +21,62 @@
 |---|---|
 | ![导入](docs/screenshots/import-light.png) | ![浅色](docs/screenshots/home-light.png) |
 
+## 为什么用两种语言
 
-## 如何开发
+v1 用 Python + Flet 写的，能正常启动游戏，但打包出来 132 MB、1900 多个文件，还误打包了 33 MB 开发工具。换成 C# + Avalonia 预期能压到 35–55 MB 的单文件。
 
+更重要的原因是**学习**：这个项目的目的就是在两种技术栈里各写一遍启动器。
 
+## 这个启动器想解决什么
 
-## 使用
+1. **只隔离 mod，别的都共享** —— 现有启动器的版本隔离是"整份隔离或全共享"的二选一，但真实需求是按类别决定粒度：`mods` 要隔离，材质包、光影、画面设置要共享。
+2. **沙盒化 / 复制一个版本** —— 临时加几个 mod 和朋友联机，自己玩时再关掉。
+3. **mod 跨版本** —— 整合包是 26.2、朋友的服务器是 1.21，不想重装一遍。
 
-### 图形界面
+完整想法见 [`docs/产品想法.md`](docs/产品想法.md)。
 
-```bash
-uv run al-gui
+## 文档
+
+| 文档 | 内容 |
+|---|---|
+| [产品想法](docs/产品想法.md) | 为什么做、三条需求、四层数据模型 |
+| [契约索引](docs/contracts/00-索引.md) | v2 的接口与磁盘布局，**改代码前先读这里** |
+| [新人上手](docs/guides/00-Intro.md) | 环境配置、任务怎么写 |
+| [学习笔记](docs/learning/README.md) | Avalonia 启动链路、C# 词表、怎么自己找答案 |
+| [文档地图](docs/README.md) | 不知道看哪份时，从这里进 |
+
+## 仓库结构
+
+```text
+docs/                 ← 文档（产品想法 / 契约 / 上手 / 学习笔记）
+legacy/v1-python/     ← v1 全部代码，已冻结，保留作参考实现
+build/                ← 构建产物，不入库
 ```
 
-图形界面提供：
+v2 开工后会新增 `src/`（`a2Cr.Core` / `a2Cr.Cli` / `a2Cr.app`）和 `tests/`。
 
-- 首页继续游玩、实例卡片和运行状态
-- 导入 / 更新 Modrinth、CurseForge、HMCL / PCL 整合包
-- 启动、停止游戏，实时查看整合包和游戏日志
-- 浏览 Mojang 版本列表并安装原版
-- 设置玩家名、最大内存、Java 运行时和主题
-- 删除实例时先移入启动器回收站（`~/.a2CrLauncher/.trash`）
+## 跑一下 v1（已归档）
 
-如果在开发时需要把启动器数据放到别的目录（例如做界面截图、避免动真实实例）：
+v1 能真实启动游戏，做参考实现很有用：
+
+```powershell
+cd legacy/v1-python
+uv sync
+uv run al-gui                  # 图形界面
+uv run python -m tests.smoke   # 离线冒烟测试
+```
+
+想让它不碰真实的 `~/.a2CrLauncher`：
 
 ```powershell
 $env:A2CR_ROOT = "$PWD\artifacts\demo-root"
 uv run al-gui
 ```
 
-### 命令行
+## 贡献
 
-```bash
-uv run al version                         # 查看可用版本
-uv run al install --version 26.2          # 安装原版
-uv run al launch --version 26.2           # 启动原版
-```
+见 [CONTRIBUTING.md](CONTRIBUTING.md)。简单说：v1 只接受 bugfix，新功能一律按 `docs/contracts/` 写进 v2。
 
-### 正版登录（微软账号）
+## 许可
 
-```bash
-uv run al login      # 按提示打开 https://www.microsoft.com/link 输入代码
-uv run al account    # 查看当前账号、令牌过期时间
-uv run al logout     # 退出当前账号
-```
-
-登录使用微软的**设备代码流程**，不需要密码、不需要开浏览器回调。登录后启动游戏会自动带上正版账号：
-
-```bash
-uv run al launch --instance "机械动力"          # 有登录时自动用正版账号
-uv run al launch --instance "机械动力" --offline # 强制离线
-uv run al launch --version 26.2 --offline --username Steve  # 离线模式自定义名字
-```
-
-账号信息（含 refresh token）保存在 `~/.a2CrLauncher/auth.json`，access token 快过期时会自动续期；换机器或想退出时运行 `al logout` 删除即可。
-
-### 导入整合包
-
-支持三种整合包格式：
-
-- **Modrinth** `.mrpack`
-- **CurseForge** 整合包 `.zip`（压缩包里有 `manifest.json`）
-- **HMCL / PCL** 导出的整合包（压缩包里有 `.minecraft` 目录）
-
-```bash
-uv run al import "Fabulously Optimized.mrpack"
-uv run al import "Create 整合包.zip" --name "机械动力"
-```
-
-导入时会自动完成：
-
-1. 识别 Minecraft 版本和加载器（Fabric / Quilt / Forge / NeoForge）
-2. 下载原版客户端、资源文件和运行库
-3. 安装对应加载器（Forge / NeoForge 会调用官方安装器，第一次会慢一些）
-4. 解压 `overrides` 或整合包自带的文件到 `~/.a2CrLauncher/instances/<实例名>/`
-5. 下载清单里的 mods
-
-导入完成后启动：
-
-```bash
-uv run al launch --instance "机械动力"
-uv run al launch --instance "机械动力" --memory 8G   # 大型整合包可以调大内存
-```
-
-查看已经导入的整合包：
-
-```bash
-uv run al instance list
-```
-
-### 下载模组
-
-从 [Modrinth](https://modrinth.com/mods) 搜索模组，直接装进指定实例（自动适配实例的 Minecraft 版本和加载器，并补上前置依赖）：
-
-```bash
-# 在实例的版本/加载器范围内搜索
-uv run al mod search jei --instance "机械动力"
-
-# 安装（自动选最新兼容版本，自动下载 required 依赖）
-uv run al mod install jei --instance "机械动力"
-
-# 只看某个版本、不装依赖
-uv run al mod install jei --instance "机械动力" --version-id <Modrinth 版本 id> --no-deps
-
-# 查看实例里已经装了哪些模组
-uv run al mod list --instance "机械动力"
-```
-
-没有实例时也可以按版本和加载器搜索：
-
-```bash
-uv run al mod search sodium --version 1.21.1 --loader fabric
-```
-
+[MIT](LICENSE.md)

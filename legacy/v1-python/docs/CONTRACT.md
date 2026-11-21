@@ -1,7 +1,7 @@
 # 接口契约
 
 > **v1（Python）已冻结，只修 bug，不再加功能。**
-> v2 改用 C# / Avalonia，契约见 `docs/a2Cr Launcher 2 Contracts/00-索引.md`。
+> v2 改用 C# / Avalonia，契约见 `../../docs/contracts/00-索引.md`。
 > 本文件只保留下来解释 v1 的实现，不是新开发的依据。
 
 这份文档的目的只有一个： **防止两个人（或两个 AI）把同一件事写出两套实现。**

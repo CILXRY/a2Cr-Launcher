@@ -1,28 +1,26 @@
 # 为 a2Cr Launcher 做贡献
 
-尽管这只是一个个人练习项目，但仍然对你的贡献予以感谢。
+尽管这只是一个个人练习项目，但仍然感谢你的贡献。
 
-> **v1（Python + Flet）已冻结**，只接受 bugfix。新功能请按
-> [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)
-> 的 v2（C# / Avalonia）契约来做。
+> **v1（Python + Flet）已冻结**，只接受 bugfix，代码在 `legacy/v1-python/`。
+> 新功能一律按 [`docs/contracts/`](docs/contracts/00-索引.md) 的 v2（C# / Avalonia）契约做。
 
-## 从 要做什么 开始
+## 从"要做什么"开始
 
-这里➡️ 是 [项目 Issues](https://github.com/CILXRY/a2cr-Launcher/issues)，  
-你可以对其中的 [Bugs (问题)](https://github.com/CILXRY/a2cr-Launcher/issues?q=is%3Aissue+state%3Aopen+label%3ABug)
-进行修复，  
-实现其中的 [Features (功能)](https://github.com/CILXRY/a2cr-Launcher/issues?q=is%3Aissue+state%3Aopen+label%3Aenhancement) ，  
+这里 ➡️ 是 [项目 Issues](https://github.com/CILXRY/a2cr-Launcher/issues)，  
+你可以修复其中的 [Bugs（问题）](https://github.com/CILXRY/a2cr-Launcher/issues?q=is%3Aissue+state%3Aopen+label%3ABug)，  
+实现其中的 [Features（功能）](https://github.com/CILXRY/a2cr-Launcher/issues?q=is%3Aissue+state%3Aopen+label%3Aenhancement)，  
 又或者只是单纯地 [提出一个想法](https://github.com/CILXRY/a2cr-Launcher/issues/new/choose)。
+
+不确定某件事该进 v1 还是 v2 时，默认答案是 **v2**，并且先去
+[`docs/产品想法.md`](docs/产品想法.md) 看它是否属于这个项目想解决的问题。
 
 ## 开发
 
 ### 1. 环境 & 分支
 
 - **主分支**：`elegant`
-- **主分支保护**：
-  - 需要 Pull Request 合并 / Require a pull request before merging
-  - 需要线性历史 / Require linear history
-  - 阻止强制 Push / Block force pushes
+- **主分支保护**：需要 Pull Request、需要线性历史、阻止强制 Push
 
 ```powershell
 git switch -c feat/xxx origin/elegant
@@ -36,89 +34,84 @@ git push -u origin feat/xxx
 
 ### 2. 确认环境
 
-在克隆代码之后：
+- 写 v2：按 [`docs/guides/01b-C# 环境配置.md`](docs/guides/01b-C%23%20环境配置.md) 装好 SDK 和 Avalonia 模板。
+- 改 v1：
 
-```powershell
-uv sync                 # 装依赖
-uv run al --help        # CLI 能起来就说明环境 OK
-uv run al-gui           # 图形界面
-uv run python -m tests.smoke   # 冒烟测试，必须全绿
-```
+  ```powershell
+  cd legacy/v1-python
+  uv sync
+  uv run al --help        # CLI 能起来就说明环境 OK
+  uv run python -m tests.smoke   # 冒烟测试，必须全绿
+  ```
 
 ### 3. 目录归属
 
-| 目录                              | 说明                         |
-|-----------------------------------|------------------------------|
-| `core/` `meta/` `launch/` `java/` | 核心逻辑，改动前在群里说一声 |
-| `ui/` `services.py`               | 界面相关，另一方一般不动     |
-| `cli.py`                          | 共用，加/改子命令先说一声    |
+| 路径 | 说明 |
+|---|---|
+| `docs/产品想法.md` | 需求依据，改需求先改这里 |
+| `docs/contracts/` | v2 契约，**改接口前先动这里 + 决策记录** |
+| `docs/guides/` `docs/learning/` | 上手文档与学习笔记 |
+| `legacy/v1-python/` | v1 代码，只修 bug |
 
-**改别人负责的目录：先打招呼，再动手。** 不要静默改完甩一个 PR。
+### 4. 冻结的东西
 
-### 4. 冻结接口
-
-见 [`docs/CONTRACT.md`](docs/CONTRACT.md)。里面列出的签名（`download`、`install`、`services.*`、`get_version_meta`）是两边共用的契约，
-**只许加可选参数，不许改语义**。
-
-改之前先通知，改完更新那份文档。
+- v1 的接口（`download`、`install`、`services.*`、`get_version_meta`）见
+  [`legacy/v1-python/docs/CONTRACT.md`](legacy/v1-python/docs/CONTRACT.md)：只许加可选参数，不许改语义。
+- v2 的接口见 `docs/contracts/`。要改，先在 `12-决策记录.md` 补一行说明为什么。
 
 ### 5. 提交前自检（硬性）
 
-```powershell
-uv run --group lint pyrefly check   # 0. 内核类型检查 0 errors
-uv run python -m tests.smoke        # 1. 冒烟测试全绿
-uv run al --help                    # 2. CLI 能起来
-uv run al install --version <已装版本>   # 3. 幂等：第二次全 skipped
-```
-
-动到界面的再加：
+写 v2 时：
 
 ```powershell
-uv run al-gui                       # 4. 窗口能开、能启动、不卡死
+dotnet build
+dotnet test
 ```
 
-**没有跑过的改动不要提 PR。** PR 描述里要贴验证结果（命令输出或截图）。
+改 v1 时：
+
+```powershell
+cd legacy/v1-python
+uv run --group lint pyrefly check   # 类型检查
+uv run python -m tests.smoke        # 冒烟测试全绿
+uv run al --help                    # CLI 能起来
+```
+
+**没有跑过的改动不要提 PR。** PR 描述里贴验证结果（命令输出或截图）。
 
 ### 6. 禁止事项
 
-1. `core/` `meta/` `launch/` `java/` 里出现 `print`（输出归 `cli.py` / `ui/`）
+1. `core/` 层里出现 `print` / 直接写文件（输出归 CLI / UI，写文件走唯一入口）
 2. 同一个功能写两套实现（进度、重试、校验……发现重复先合并）
-3. 改冻结接口不通知
+3. 改冻结接口不通知、不更新文档
 4. 一个 PR 做三件事、改二十个文件
 5. 提了 AI 生成的大段代码，但自己解释不了它在干什么
+6. 把 `build/`、`bin/`、`obj/`、`artifacts/` 提交进仓库
 
 ### 7. 任务怎么写
 
-不好的任务： **"把整合包导入做得稳一点"**
+不好的任务：**"把整合包导入做得稳一点"**
 
 好的任务包含四样：
 
-```
+```text
 目标：导入 mrpack 时，若实例目录已存在则跳过已下载文件，不重复下载
-涉及：src/a2cr_launcher/modpack/local.py
-不要动：core/download.py（接口已冻结）
+涉及：src/a2Cr.Core/Modpack/
+不要动：Download/（接口已冻结）
 验收：
-  1. uv run al import X.mrpack 跑两次
+  1. a2Cr import X.mrpack 跑两次
   2. 第二次日志里全是 skipped，不产生网络请求
   3. 实例目录内容不变
 ```
 
 **"正确"必须是可验证的。** 给不出验收命令，就说明任务还没想清楚。
 
-### 8. 每周同步（10 分钟）
+## 提交与版本
 
-只问三个问题：
+使用 [Conventional Commit messages](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 作为提交信息，
+PR 用 Squash Merge 合并到 `elegant`，保持线性历史。
 
-1. 这周你打算改哪些 **文件**？
-2. 有没有要动 **冻结接口**？
-3. 卡在哪？
-
-## 版本更新
-
-项目使用 [Release Please](https://github.com/googleapis/release-please) 来管理版本，
-版本的递增在 PR 到 `elegant` 分支进行
-
-需要使用 Squash Merge 并使用 [Conventional Commit messages](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范来作为
-PR 标题
+v1 的版本由 Release Please 管理，已随 v1 一起归档；v2 的发布方式在
+`docs/contracts/11-验收与回归.md` 里定。
 
 问文件，不问功能——功能描述会骗人，文件列表不会。
