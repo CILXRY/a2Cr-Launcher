@@ -111,7 +111,8 @@ uv run al --help                    # CLI 能起来
 使用 [Conventional Commit messages](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 作为提交信息，
 PR 用 Squash Merge 合并到 `elegant`，保持线性历史。
 
-v1 的版本由 Release Please 管理，已随 v1 一起归档；v2 的发布方式在
-`docs/contracts/11-验收与回归.md` 里定。
+版本由 [Release Please](https://github.com/googleapis/release-please) 管理：它读 Conventional
+Commits 决定版本号、维护 `CHANGELOG.md` 并打 tag，配置在根目录的
+`release-please-config.json`。细节见 [`docs/conventions/release.md`](docs/conventions/release.md)。
 
 问文件，不问功能——功能描述会骗人，文件列表不会。

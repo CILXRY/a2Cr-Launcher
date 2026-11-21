@@ -1,0 +1,30 @@
+name: Release Please
+
+on:
+  push:
+    branches: [elegant]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # 打 tag 之后的构建与上传在 M5 之前保持手动（见 docs/conventions/release.md 第 6 节）。
+      # 等 Windows 产物稳定了，再在这里加 build + gh release upload。
+      - name: 汇总
+        if: steps.release.outputs.releases_created == 'true'
+        run: |
+          echo "已创建发布：${{ steps.release.outputs.tag_name }}"

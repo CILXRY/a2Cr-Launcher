@@ -14,13 +14,18 @@ SemVer：`主.次.修`。
 **从它派生**，不许手写第二份。v1 的教训是版本号写在两处（`pyproject.toml` + `__init__.py`），
 忘同步就不一致。
 
-派生方式二选一：
+派生方式已经定好，别自己发明第三种：
 
-1. **Release Please 直接更新项目文件**（它有针对 .NET 的更新策略，会改 `<Version>`）；
-2. 用 `simple` 策略只维护 manifest + CHANGELOG，构建时由 `Directory.Build.props`
-   读 manifest 注入 `$(Version)`。
+- `release-please-config.json` 用 `simple` 策略（它只管 manifest 和 CHANGELOG）；
+- 再加一条 `extra-files`，用 `xml` 更新器按 xpath 改 `Directory.Build.props` 里的
+  `<Version>`——**那就是唯一那个值**，各 `.csproj` 里一律不写 `<Version>`；
+- `Directory.Build.props` 同时承载所有项目共享的编译设置（nullable、警告即错误）。
 
-优先 1：少一层间接。用不了 1 再用 2。
+改了策略要同时改三处：`release-please-config.json`、`Directory.Build.props`、
+`.release-please-manifest.json` 里的初值。
+
+> v1 的 release-please 配置归档在 `legacy/v1-python/` 里，只作历史参考。
+> GitHub 只读根目录的 `.github/workflows/`，所以那份不会生效。
 
 ## 2. 版本节奏
 
