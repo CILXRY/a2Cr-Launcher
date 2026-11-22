@@ -1,24 +1,23 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "bootstrap-sha": "4278f6cf1e2b2222b6e4bcaf87f492b20b782882",
-  "packages": {
-    ".": {
-      "release-type": "simple",
-      "package-name": "a2cr-launcher",
-      "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false,
-      "include-v-in-tag": true,
-      "bump-patch-for-minor-pre-major": false,
-      "bump-minor-pre-major": true,
-      "extra-files": [
-        {
-          "type": "xml",
-          "path": "Directory.Build.props",
-          "xpath": "//Project/PropertyGroup/Version"
-        }
-      ]
+  "release-type": "simple",
+  "package-name": "a2cr-launcher",
+  "changelog-path": "CHANGELOG.md",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "bump-patch-for-minor-pre-major": false,
+  "bump-minor-pre-major": true,
+  "prerelease": true,
+  "versioning": "prerelease",
+  "prerelease-type": "beta",
+  "extra-files": [
+    {
+      "type": "xml",
+      "path": "Directory.Build.props",
+      "xpath": "//Project/PropertyGroup/Version"
     }
-  },
+  ],
   "changelog-sections": [
     {
       "type": "feat",
