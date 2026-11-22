@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using a2Cr.Core.Download;
 using a2Cr.Core.Errors;
+using a2Cr.Core.Launch;
 using a2Cr.Core.Path;
 using IoPath = System.IO.Path;
 
@@ -123,8 +124,11 @@ public sealed class VersionInstaller
         var items = new List<DownloadItem>();
         AddVersionDownloads(merged, versionId, items);
         AddLibraries(merged, items);
+        AddNatives(merged, items);
         if (items.Count == 0) throw new LauncherException("meta_incomplete", $"版本 {versionId} 没有可下载的文件。");
         await DownloadOrThrowAsync(items, progress, cancellationToken).ConfigureAwait(false);
+
+        ExtractNatives(merged, versionId);
 
         var assets = new List<DownloadItem>();
         AddAssets(merged, assets);
@@ -180,6 +184,27 @@ public sealed class VersionInstaller
         {
             items.Add(new DownloadItem(library.Url, IoPath.Combine(_paths.LibrariesDir, library.RelativePath.Replace('/', IoPath.DirectorySeparatorChar)),
                 library.Sha1, library.Size));
+        }
+    }
+
+    private void AddNatives(JsonObject meta, ICollection<DownloadItem> items)
+    {
+        foreach (var native in LibraryResolver.BuildNativeDownloads(meta, PlatformName(), PlatformArch()))
+        {
+            items.Add(new DownloadItem(native.Url,
+                IoPath.Combine(_paths.LibrariesDir, native.RelativePath.Replace('/', IoPath.DirectorySeparatorChar)),
+                native.Sha1, native.Size));
+        }
+    }
+
+    private void ExtractNatives(JsonObject meta, string versionId)
+    {
+        var nativesDirectory = IoPath.Combine(_paths.VersionsDir, versionId, "natives");
+        foreach (var native in LibraryResolver.BuildNativeDownloads(meta, PlatformName(), PlatformArch()))
+        {
+            var archive = IoPath.Combine(_paths.LibrariesDir,
+                native.RelativePath.Replace('/', IoPath.DirectorySeparatorChar));
+            NativeLibraryExtractor.Extract(archive, nativesDirectory);
         }
     }
 
