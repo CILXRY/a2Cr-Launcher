@@ -2,20 +2,41 @@ using a2Cr.Core.Path;
 
 namespace a2Cr.Cli;
 
-class Program
+internal static class Program
 {
-    static async Task Main(string[] args)
+    private static Task<int> Main(string[] args)
     {
-        var librariesDir = LauncherPaths.LibrariesDir;
+        if (args.Length > 0 && args[0] is "--help" or "-h")
+        {
+            Console.WriteLine("a2Cr M1\n用法：a2Cr [--root <路径>] [--help]");
+            return Task.FromResult(0);
+        }
 
-        Console.WriteLine(librariesDir);
-        LauncherPaths.CreateDirs();
+        string? root = null;
+        for (var index = 0; index < args.Length; index++)
+        {
+            if (args[index] == "--root" && index + 1 < args.Length)
+            {
+                root = args[++index];
+            }
+            else if (args[index].StartsWith("--", StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine($"错误：未知选项 {args[index]}");
+                return Task.FromResult(2);
+            }
+        }
 
-
-        var r = await a2Cr.Core.Download.Download.DownloadFile(
-            "https://piston-meta.mojang.com/mc/game/version_manifest.json",
-            Path.Join(librariesDir, "version_manifest.json"));
-        Console.WriteLine($"ok={r.Ok} error={r.ErrorMessage}");
-        if (!r.Ok) Environment.ExitCode = 1;
+        try
+        {
+            var paths = new LauncherPaths(root);
+            paths.CreateDirs();
+            Console.WriteLine($"数据目录：{paths.RootDir}");
+            return Task.FromResult(0);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine($"错误：无法初始化数据目录（建议：检查目录权限）\n{exception.Message}");
+            return Task.FromResult(1);
+        }
     }
 }
