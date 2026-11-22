@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
+using a2Cr.Core.Settings;
 using a2Cr.Core.Storage;
 
 namespace a2Cr.Core.Instances;
@@ -38,6 +39,22 @@ public sealed class InstanceMetadata
     public JsonObject? Source => _root["source"] as JsonObject;
     public JsonObject? Overrides => _root["overrides"] as JsonObject;
     public JsonObject Root => _root;
+
+    /// <summary>非法覆盖值回退全局，不阻止启动。</summary>
+    public string? MaxMemoryOverride
+    {
+        get
+        {
+            var value = GetString("overrides", "max_memory");
+            return MemoryValue.IsValid(value) ? MemoryValue.Normalize(value) : null;
+        }
+    }
+
+    public string? JvmArgsOverride => GetString("overrides", "jvm_args");
+
+    public int? JavaMajorOverride => GetInt("overrides", "java_major") is > 0 and var major ? major : null;
+
+    public bool VerifyOnLaunch => GetBool("overrides", "verify_on_launch") ?? false;
 
     public static InstanceMetadata Create(string folder, string name, string mcVersion, string versionId,
         string loaderType = "vanilla", string loaderVersion = "", JsonObject? source = null,
@@ -140,6 +157,18 @@ public sealed class InstanceMetadata
             return null;
         }
         catch (FormatException)
+        {
+            return null;
+        }
+    }
+
+    private bool? GetBool(params string[] keys)
+    {
+        try
+        {
+            return GetNode(keys)?.GetValue<bool>();
+        }
+        catch (InvalidOperationException)
         {
             return null;
         }

@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Path;
 using a2Cr.Core.Storage;
@@ -9,7 +8,6 @@ namespace a2Cr.Core.Settings;
 
 public sealed class LauncherSettings
 {
-    private static readonly Regex MemoryPattern = new("^(\\d+)([GM])$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private readonly JsonObject _root;
 
     private LauncherSettings(JsonObject root)
@@ -36,14 +34,9 @@ public sealed class LauncherSettings
         return settings;
     }
 
-    public string MaxMemory
-    {
-        get
-        {
-            var value = GetString("launch", "max_memory");
-            return value is not null && MemoryPattern.IsMatch(value) ? value : "4G";
-        }
-    }
+    public string MaxMemory => MemoryValue.Normalize(GetString("launch", "max_memory"));
+
+    public string JvmArgs => GetString("launch", "jvm_args") ?? string.Empty;
 
     public string InstanceIdStyle
     {

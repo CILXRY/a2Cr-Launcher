@@ -22,7 +22,11 @@ public sealed record LaunchOptions(
     IReadOnlyDictionary<string, bool>? Features = null,
     IReadOnlyDictionary<string, string>? FeatureVariables = null,
     string LauncherName = "a2cr-launcher",
-    string LauncherVersion = "0.5.0-beta");
+    string LauncherVersion = "0.5.0-beta",
+    string JvmArgs = "",
+    int? JavaMajor = null,
+    IReadOnlyDictionary<int, string>? JavaOverrides = null,
+    IReadOnlyList<string>? JavaExtraPaths = null);
 
 public sealed record LaunchPlan(
     string JavaExecutable,
@@ -84,10 +88,14 @@ public sealed class LaunchArgumentBuilder
         }
 
         var requiredJava = meta["javaVersion"]?["majorVersion"]?.GetValue<int>() ?? 8;
-        var java = options.JavaPath is null
-            ? _javaFinder.Select(requiredJava).ExecutablePath
-            : JavaRuntimeFinder.ResolveExecutable(options.JavaPath)
-              ?? throw new LauncherException("java_invalid", $"设置中的 Java 路径无效：{options.JavaPath}");
+        if (options.JavaMajor is int requestedJava && requestedJava < requiredJava)
+        {
+            throw new LauncherException("java_invalid",
+                $"这个版本要求 Java {requiredJava} 或更高，不能使用 Java {requestedJava}。",
+                $"改用 Java {requiredJava} 或更高版本。");
+        }
+
+        var java = ResolveJava(options, requiredJava);
 
         var baseVersion = meta["_baseVersion"]?.GetValue<string>() ?? versionId;
         var mainClassUsesBootstrap = mainClass.Contains("bootstraplauncher", StringComparison.OrdinalIgnoreCase);
@@ -98,12 +106,38 @@ public sealed class LaunchArgumentBuilder
         Directory.CreateDirectory(natives);
         var values = BuildValues(meta, versionId, baseVersion, options, classpath, natives);
         var result = new List<string> { java, $"-Xmx{options.MaxMemory}", $"-Xms{options.MaxMemory}" };
+        if (!string.IsNullOrWhiteSpace(options.JvmArgs)) result.AddRange(SplitArguments(options.JvmArgs));
         AppendArguments(result, arguments["jvm"], meta, values, options.Features);
         AppendLogging(result, meta, values);
         result.Add(mainClass);
         AppendArguments(result, arguments["game"], meta, values, options.Features);
         return new LaunchPlan(java, result.Skip(1).ToArray(), classpath, natives, baseVersion);
     }
+
+    private string ResolveJava(LaunchOptions options, int requiredJava)
+    {
+        if (options.JavaPath is not null)
+        {
+            return JavaRuntimeFinder.ResolveExecutable(options.JavaPath)
+                   ?? throw new LauncherException("java_invalid", $"设置中的 Java 路径无效：{options.JavaPath}");
+        }
+
+        var requestedMajor = options.JavaMajor ?? requiredJava;
+        if (options.JavaOverrides?.TryGetValue(requestedMajor, out var configuredPath) == true)
+        {
+            return JavaRuntimeFinder.ResolveExecutable(configuredPath)
+                   ?? throw new LauncherException("java_invalid", $"设置中的 Java 路径无效：{configuredPath}");
+        }
+
+        return _javaFinder.Select(requestedMajor, options.JavaExtraPaths).ExecutablePath;
+    }
+
+    /// <summary>
+    /// 把 <c>launch.jvm_args</c> 按空白拆成参数。
+    /// 契约规定不解析引号——需要引号的参数请写参数文件，避免各平台转义规则打架。
+    /// </summary>
+    public static IReadOnlyList<string> SplitArguments(string value) =>
+        value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
     private Dictionary<string, string> BuildValues(JsonObject meta, string versionId, string baseVersion,
         LaunchOptions options, IReadOnlyList<string> classpath, string natives)

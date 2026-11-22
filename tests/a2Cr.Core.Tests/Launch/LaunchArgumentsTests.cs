@@ -67,6 +67,70 @@ public sealed class LaunchArgumentsTests
         Assert.DoesNotContain(plan.Classpath, path => path.EndsWith("client.jar", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void Build_AppendsJvmArgsAfterMemory()
+    {
+        var paths = CreatePaths();
+        var versionDir = IoPath.Combine(paths.VersionsDir, "1.20.1");
+        Directory.CreateDirectory(versionDir);
+        File.WriteAllBytes(IoPath.Combine(versionDir, "client.jar"), [1]);
+        var meta = BaseMeta("net.minecraft.client.Main");
+        meta["arguments"] = new JsonObject { ["jvm"] = new JsonArray(), ["game"] = new JsonArray() };
+
+        var plan = new LaunchArgumentBuilder(paths, new StubJavaFinder())
+            .Build(meta, "1.20.1", new LaunchOptions(IoPath.Combine(paths.RootDir, "game"),
+                JvmArgs: "-Dfoo=bar -XX:+UseG1GC"));
+
+        var arguments = plan.Arguments.ToList();
+        var memoryIndex = arguments.IndexOf("-Xmx4G");
+        Assert.True(memoryIndex >= 0);
+        Assert.Equal(memoryIndex + 2, arguments.IndexOf("-Dfoo=bar"));
+        Assert.Equal(memoryIndex + 3, arguments.IndexOf("-XX:+UseG1GC"));
+    }
+
+    [Fact]
+    public void Build_RejectsJavaMajorBelowRequirement()
+    {
+        var paths = CreatePaths();
+        var meta = BaseMeta("net.minecraft.client.Main");
+        meta["arguments"] = new JsonObject { ["jvm"] = new JsonArray(), ["game"] = new JsonArray() };
+
+        var exception = Assert.Throws<LauncherException>(() =>
+            new LaunchArgumentBuilder(paths, new StubJavaFinder()).Build(meta, "1.20.1",
+                new LaunchOptions(IoPath.Combine(paths.RootDir, "game"), JavaMajor: 8)));
+
+        Assert.Equal("java_invalid", exception.Code);
+    }
+
+    [Fact]
+    public void Build_UsesConfiguredJavaPathForRequestedMajor()
+    {
+        var paths = CreatePaths();
+        var javaHome = IoPath.Combine(paths.RootDir, "java21");
+        var executable = IoPath.Combine(javaHome, "bin", OperatingSystem.IsWindows() ? "java.exe" : "java");
+        Directory.CreateDirectory(IoPath.GetDirectoryName(executable)!);
+        File.WriteAllBytes(executable, []);
+        var versionDir = IoPath.Combine(paths.VersionsDir, "1.20.1");
+        Directory.CreateDirectory(versionDir);
+        File.WriteAllBytes(IoPath.Combine(versionDir, "client.jar"), [1]);
+        var meta = BaseMeta("net.minecraft.client.Main");
+        meta["arguments"] = new JsonObject { ["jvm"] = new JsonArray(), ["game"] = new JsonArray() };
+
+        var plan = new LaunchArgumentBuilder(paths, new StubJavaFinder())
+            .Build(meta, "1.20.1", new LaunchOptions(IoPath.Combine(paths.RootDir, "game"),
+                JavaMajor: 21, JavaOverrides: new Dictionary<int, string> { [21] = javaHome }));
+
+        Assert.Equal(executable, plan.JavaExecutable);
+    }
+
+    [Fact]
+    public void SplitArguments_SplitsOnWhitespaceWithoutParsingQuotes()
+    {
+        // 契约 12：jvm_args 只按空白切分，引号原样留给 JVM，启动器不猜用户意图。
+        Assert.Equal(["-Xmx4G", "-Dfoo=\"a", "b\"", "-Dbar=\"quoted\""],
+            LaunchArgumentBuilder.SplitArguments("  -Xmx4G   -Dfoo=\"a b\" -Dbar=\"quoted\"  "));
+    }
+
     private static JsonObject BaseMeta(string mainClass) => new()
     {
         ["id"] = "1.20.1",
