@@ -3,7 +3,7 @@
 尽管这只是一个个人练习项目，但仍然对你的贡献予以感谢。
 
 > **v1（Python + Flet）已冻结**，只接受 bugfix。新功能请按
-> [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)
+> [`docs/contracts/`](docs/contracts/00-索引.md)
 > 的 v2（C# / Avalonia）契约来做。
 ## 从"要做什么"开始
 
