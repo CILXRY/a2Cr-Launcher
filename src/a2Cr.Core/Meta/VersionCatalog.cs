@@ -237,13 +237,3 @@ public sealed class VersionInstaller
     };
 }
 
-public sealed class DownloadException : LauncherException
-{
-    public DownloadException(IReadOnlyList<DownloadFailure> failures)
-        : base("download_failed", $"有 {failures.Count} 个文件下载失败。", "检查网络或代理，重新执行可以继续已完成的下载。")
-    {
-        Failures = failures;
-    }
-
-    public IReadOnlyList<DownloadFailure> Failures { get; }
-}
