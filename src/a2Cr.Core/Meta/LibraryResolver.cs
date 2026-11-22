@@ -8,11 +8,6 @@ public static class LibraryResolver
 {
     private const string DefaultMaven = "https://libraries.minecraft.net/";
 
-    public static string? GetRelativePath(IReadOnlyDictionary<string, object?> library)
-    {
-        return null;
-    }
-
     public static string? GetRelativePath(System.Text.Json.Nodes.JsonObject library)
     {
         var artifactPath = library["downloads"]?["artifact"]?["path"]?.GetValue<string>();

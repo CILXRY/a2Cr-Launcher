@@ -72,18 +72,15 @@ public sealed class VersionMetaMerger
     private static JsonObject Merge(JsonObject parent, JsonObject child, string baseVersion)
     {
         var merged = (JsonObject)parent.DeepClone();
-        merged["id"] = child["id"]?.DeepClone() ?? parent["id"]?.DeepClone();
-        merged["type"] = child["type"]?.DeepClone() ?? parent["type"]?.DeepClone() ?? "release";
-        merged["mainClass"] = child["mainClass"]?.DeepClone() ?? parent["mainClass"]?.DeepClone();
         merged["libraries"] = MergeLibraries(parent["libraries"] as JsonArray, child["libraries"] as JsonArray);
         merged["arguments"] = MergeArguments(parent["arguments"] as JsonObject, child["arguments"] as JsonObject);
         merged["_baseVersion"] = baseVersion;
 
-        foreach (var property in new[] { "minecraftArguments", "logging", "javaVersion" })
+        foreach (var property in child)
         {
-            if (child[property] is not null)
+            if (property.Key is not ("inheritsFrom" or "libraries" or "arguments"))
             {
-                merged[property] = child[property]!.DeepClone();
+                merged[property.Key] = property.Value?.DeepClone();
             }
         }
 
