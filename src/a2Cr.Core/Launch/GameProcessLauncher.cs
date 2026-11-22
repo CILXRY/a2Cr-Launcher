@@ -17,16 +17,18 @@ public sealed class GameProcessLauncher
         LaunchPlan plan,
         string gameDirectory,
         LaunchCallbacks? callbacks = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool detach = false)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         Directory.CreateDirectory(gameDirectory);
         var startInfo = new ProcessStartInfo
         {
             FileName = plan.JavaExecutable,
             WorkingDirectory = IoPath.GetFullPath(gameDirectory),
             UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
+            RedirectStandardOutput = !detach,
+            RedirectStandardError = !detach,
             CreateNoWindow = true,
             StandardOutputEncoding = new UTF8Encoding(false, false),
             StandardErrorEncoding = new UTF8Encoding(false, false)
@@ -51,6 +53,8 @@ public sealed class GameProcessLauncher
         {
             // UI 回调故障不能改变已经创建的游戏进程状态。
         }
+
+        if (detach) return new LaunchResult(0);
 
         var outputTask = ForwardLinesAsync(process.StandardOutput, callbacks?.OnLog, cancellationToken);
         var errorTask = ForwardLinesAsync(process.StandardError, callbacks?.OnLog, cancellationToken);

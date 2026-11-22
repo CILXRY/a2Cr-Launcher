@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Instances;
 using a2Cr.Core.Path;
@@ -54,6 +55,8 @@ public sealed class InstanceManagerTests
             "fabric", "0.16.9", cancellationToken: CancellationToken.None);
         var userMod = System.IO.Path.Combine(manager.InstanceDirectory(source.Metadata.Folder), "mods", "manual.jar");
         await File.WriteAllTextAsync(userMod, "user");
+        source.Metadata.Root["overrides"] = new JsonObject { ["max_memory"] = "8G" };
+        await source.Metadata.SaveAsync(manager.MetaPath(source.Metadata.Folder), CancellationToken.None);
 
         var clone = await manager.CloneAsync(source.Metadata.Folder, "Clone", false, CancellationToken.None);
 
@@ -61,6 +64,7 @@ public sealed class InstanceManagerTests
         Assert.True(File.Exists(System.IO.Path.Combine(cloneDirectory, "mods", "sodium.jar")));
         Assert.False(File.Exists(System.IO.Path.Combine(cloneDirectory, "mods", "manual.jar")));
         Assert.Equal(source.Metadata.Folder, clone.Metadata.ClonedFrom);
+        Assert.Equal("8G", clone.Metadata.MaxMemoryOverride);
         var manifest = await InstanceManifest.LoadAsync(
             System.IO.Path.Combine(cloneDirectory, "manifest.json"), CancellationToken.None);
         Assert.Equal(FileOrigin.Pool, Assert.Single(manifest.Entries).Origin);

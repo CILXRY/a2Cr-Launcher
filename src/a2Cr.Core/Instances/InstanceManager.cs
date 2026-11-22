@@ -108,6 +108,8 @@ public sealed class InstanceManager
         {
             var metadata = InstanceMetadata.Create(finalFolder, newName, source.McVersion, source.VersionId,
                 source.LoaderType, source.LoaderVersion, source.Source, source.Template, sourceFolder);
+            // 覆盖项是用户对这个实例的显式决定，克隆时必须一起带走。
+            if (source.GetOverrides() is { } overrides) metadata.Root["overrides"] = overrides.DeepClone();
             await metadata.SaveAsync(IoPath.Combine(temporaryDirectory, "instance.json"), cancellationToken)
                 .ConfigureAwait(false);
             CreatePrivateDirectories(temporaryDirectory);

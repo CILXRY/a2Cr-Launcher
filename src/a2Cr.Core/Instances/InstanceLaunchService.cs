@@ -92,12 +92,13 @@ public sealed class InstanceLaunchService
     /// 避免进程启动失败时污染排序，也避免在回调里同步阻塞写文件。
     /// </summary>
     public async Task<LaunchResult> LaunchAsync(string folder, LaunchOverrides overrides,
-        Action<string>? onLog, CancellationToken cancellationToken)
+        Action<string>? onLog, CancellationToken cancellationToken, bool detach = false)
     {
         var prepared = await PrepareAsync(folder, overrides, cancellationToken).ConfigureAwait(false);
         var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var run = _processLauncher.RunAsync(prepared.Plan, prepared.GameDirectory,
-            new LaunchCallbacks(OnProcess: _ => started.TrySetResult(true), OnLog: onLog), cancellationToken);
+            new LaunchCallbacks(OnProcess: _ => started.TrySetResult(true), OnLog: onLog), cancellationToken,
+            detach);
         await Task.WhenAny(started.Task, run).ConfigureAwait(false);
         if (started.Task.IsCompleted)
         {
@@ -110,6 +111,9 @@ public sealed class InstanceLaunchService
                 // 元数据写失败不影响已经启动的游戏。
             }
             catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
             {
             }
         }
