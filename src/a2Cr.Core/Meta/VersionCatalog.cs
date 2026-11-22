@@ -102,7 +102,7 @@ public sealed class VersionCatalog
         DateTimeOffset.TryParse(value, out var result) ? result : null;
 }
 
-public sealed class VersionInstaller
+public sealed class VersionInstaller : IVersionInstaller
 {
     private readonly LauncherPaths _paths;
     private readonly VersionCatalog _catalog;
