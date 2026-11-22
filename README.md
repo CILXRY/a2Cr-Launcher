@@ -17,6 +17,12 @@
 > [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)。
 > 下面的内容描述的是 v1 的用法。
 
+> **项目状态（2026-11）**
+> v1（Python + Flet）已冻结，最后一个版本对应 tag `v1-final`，之后只修 bug。
+> 下一代 v2 正在用 C# / Avalonia 重写，设计契约见
+> [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)。
+> 下面的内容描述的是 v1 的用法。
+
 ![首页](docs/screenshots/home-dark.png)
 
 ## 界面预览（v1）
