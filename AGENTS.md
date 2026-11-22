@@ -1,153 +1,69 @@
 # AGENTS.md
 
-给后续接手这个仓库的 AI / 开发者看的说明。先读这份，再读 `docs/CONTRACT.md`
-和 `docs/UI.md`。
+给在这个仓库里干活的 AI / 开发者看的说明。**先读这份**，再按需要读 `docs/`。
 
-## 项目概况
+面向用户的文案、代码注释、提交信息一律用中文。
 
-- a2Cr Launcher：迷你 Minecraft 启动器，Python 3.14。
-- 两套入口：CLI `al`（`a2cr_launcher.cli`）和 Flet 桌面 GUI `al-gui`
-  （`a2cr_launcher.ui.gui`）。
+## 现在是什么状态
+
+- **v1（Python + Flet）已冻结**，tag `v1-final`，全部代码在 `legacy/v1-python/`，只修致命 bug。
+  它的开发规则在 `legacy/v1-python/AGENTS.md`（只在真的去改 v1 时才需要读）。
+- **v2（C# + Avalonia）在设计阶段**，契约已定、**还没有一行代码**。
 - 主分支：`elegant`。
 - 启动器数据默认在 `~/.a2CrLauncher`；可用环境变量 `A2CR_ROOT` 整体覆盖。
-- **v1 已冻结（2026-11）**：只修 bug，不再加功能。下一代 v2 用 C# / Avalonia
-  重写，设计契约在 `docs/a2Cr Launcher 2 Contracts/`（`00-索引.md` 起步）。
-  新需求先确认是否属于 v2，不要往 v1 里塞。
 
-## 常用命令
 
-```powershell
-uv sync
-uv run python -m tests.smoke      # 离线冒烟测试，必须全绿
-uv run al --help                  # CLI 至少能起来
-uv run al-gui                     # 打开 GUI
-uv run --group lint pyrefly check # 内核类型检查（ui/ 不在范围内，见 pyproject.toml）
-```
+动 v1 之前先问一句"这是不是应该进 v2"。默认答案：是。
 
-在受限环境里 `uv` 缓存可能不可写，可以直接用项目虚拟环境：
-
-```powershell
-.\.venv\Scripts\python.exe -m tests.smoke
-.\.venv\Scripts\al.exe --help
-```
-
-## 开发/测试用的数据目录
-
-不要为了测试往真实的 `~/.a2CrLauncher` 里塞东西。推荐：
-
-```powershell
-$env:A2CR_ROOT = "$PWD\artifacts\demo-root"
-uv run al-gui
-```
-
-`artifacts/` 只用于临时演示数据，提交前删掉。截图产物放
-`docs/screenshots/`，不要放临时日志。
-
-## 目录与职责
+## 目录职责
 
 | 路径 | 职责 |
 |---|---|
-| `src/a2cr_launcher/core/` | 下载、HTTP、路径、平台信息 |
-| `src/a2cr_launcher/meta/` | 版本列表/版本 JSON/资源索引/继承合并 |
-| `src/a2cr_launcher/launch/` | 参数拼装、运行库、安装、进程 |
-| `src/a2cr_launcher/java/` | Java 发现与选择 |
-| `src/a2cr_launcher/modloader/` | Fabric / Quilt / Forge / NeoForge 安装 |
-| `src/a2cr_launcher/modpack/` | Modrinth / CurseForge / HMCL、PCL 导入与更新 |
-| `src/a2cr_launcher/instance.py` | 实例元数据、回收站 |
-| `src/a2cr_launcher/settings.py` | `settings.json` 读写 |
-| `src/a2cr_launcher/services.py` | **UI 唯一允许依赖的入口** |
-| `src/a2cr_launcher/ui/` | Flet 界面 |
-| `tests/smoke.py` | 离线冒烟测试 |
+| `docs/产品想法.md` | **为什么**做这个启动器；判断功能该不该做的依据 |
+| `docs/contracts/` | v2 的**唯一事实来源**：接口、磁盘布局、错误语义、验收 |
+| `docs/guides/` | 环境配置、任务怎么写 |
+| `docs/learning/` | 学习笔记，不参与实现 |
+| `docs/screenshots/` | v1 界面截图 |
+| `legacy/v1-python/` | v1 全套代码，只读参考 |
 
-## 冻结的接口约定
+`src/` 和 `tests/` 目前不存在。v2 开工时按 `docs/contracts/02-目录结构.md` 和
+`docs/guides/01b-C# 环境配置.md` 建：`src/a2Cr.Core`（核心）、`src/a2Cr.Cli`（命令行）、
+`src/a2Cr.app`（Avalonia）、`tests/a2Cr.Core.Tests`。
 
-详见 `docs/CONTRACT.md`，这里只列最容易踩的几条：
+## 铁律
 
-1. **只增不改**：给现有函数加参数时必须有默认值，不要改现有参数含义和顺序。
-2. **UI 只依赖 `services.py`**。不要在 `ui/` 里 import `core/`、`meta/`、
-   `launch/`、`java/`、`modpack/`。
-3. **回调是 UI 的生命线**：`on_progress`、`on_log`、`on_process` 不要删。
-4. **底层不 print**：`core/`、`meta/`、`launch/`、`java/` 里不写 `print`，
-   输出交给 CLI/GUI。
-5. **路径只有一个来源**：所有目录从 `core/paths.py` 取。
-6. 取消下载抛 `core.download.DownloadCancelled`；`services.py` 会重新导出它，
-   UI 捕获 `services.DownloadCancelled`。不要把它当成普通 `RuntimeError` 包住。
-
-## GUI 结构
-
-- `ui/gui.py`：`LauncherApp`，负责窗口、导航、数据刷新、后台任务、游戏会话、
-  底部状态条。页面函数统一接收 `LauncherApp`。
-- `ui/theme.py`：深/浅调色板、Flet Theme、封面渐变。
-- `ui/components.py`：卡片、按钮、标签、空状态、封面、logo。
-- `ui/state.py`：`LogBus`、`TaskState`、`GameSession`、`StdoutTee`。
-- `ui/dialogs.py`：错误/确认对话框、导入更新向导。
-- `ui/views/`：首页、实例、版本、日志、设置。
-- `ui/utils.py`：纯格式化函数，方便单测。
-
-线程模型：
-
-- 网络/磁盘操作走 `asyncio.to_thread`；
-- 工作线程只写 `LogBus` 队列和 `TaskState` 字段，**不要直接碰控件**；
-- `_pump_logs` / `_pump_tasks` / `_pump_session` 在事件循环里定时把状态搬到控件。
-
-## Flet 1.1.2 踩坑清单
-
-这个项目用的是 Flet 1.1.2，API 和旧教程差别很大：
-
-1. 颜色是 **`#AARRGGBB`**，不是 `#RRGGBBAA`。写错会得到亮黄色/透明异常。
-2. 内边距/外边距用 `ft.Padding.symmetric(...)`、`ft.Margin.symmetric(...)`，
-   不是 `ft.padding.symmetric`。
-3. `Row(wrap=True)` 的子控件里不要再放 `expand=True`，否则 Flutter 布局会
-   渲染成灰色错误块。需要响应式时用 `ResponsiveRow`。
-4. `ListView` 在 `expand` 约束不明确时也可能出现灰色占位；版本/日志页现在用
-   `Column(scroll=ft.ScrollMode.AUTO)`。
-5. `Switch` 的标签样式参数是 `label_text_style`，不是 `label_style`。
-6. `FilePicker`、`Clipboard` 是异步 Service，需要 `page.services.append(...)`，
-   `await picker.pick_files(...)`。
-7. `ft.Icon` 的图标字段是 `icon`，不是 `name`。
-8. `Container.offset` 是**相对控件尺寸的比例**，不是像素；hover 上浮用 `-0.012`。
-9. 切换主题时 `LauncherApp` 会重建外壳并重新渲染当前页；新增组件不要在模块
-   顶层缓存颜色，构建时读 `P` 或 `app.p`。
-
-## 修改 UI 时的习惯
-
-- 所有面向用户的文案和代码注释用中文；注释解释“为什么”，不要复述代码。
-- 新页面尽量拆进 `ui/views/`，不要把逻辑堆回 `gui.py`。
-- 耗时操作必须有 busy/进度状态，不能让界面看起来卡死。
-- 删除实例用回收站（`instance.trash`），不要 `shutil.rmtree`。
-- 导入/更新失败要给出可操作提示；已下载文件要可续传。
-- 新增/修改界面能力后，同步更新 `docs/UI.md` 和截图。
+1. **契约冲突时改实现，不改文档。** 要改文档，先在 `docs/contracts/12-决策记录.md` 加一行写清为什么。
+2. **一份文档只管一件事。** 补充内容写进它该在的那份文件，不要顺手塞进别的文档。
+3. **`a2Cr` 的写法不能错**（`A2cr` / `a2CR` 都是错的），全小写 `a2cr` 只用于包名。见 `docs/contracts/01-名称定义.md`。
+4. **路径只有一个来源**：v2 由 `LauncherPaths` 统一提供，业务代码不许自己拼 `Environment.GetFolderPath`。
+5. **底层不 print**：core 层不打日志、不写文件（写文件只走 `04-文件存储.md` 定义的入口），输出交给 CLI / UI。
+6. **取消不是失败**：取消抛 `OperationCanceledException`，绝不能被包成普通 `RuntimeError` 之类的失败。
+7. **游戏日志不集中**：永远读实例目录里的 `logs/latest.log`，不要做链接或集中收集。
 
 ## 验证底线
 
-任何提交前至少跑：
+v2 代码还没开始，下面这条在 `src/` 建好之后生效：
 
 ```powershell
+dotnet build
+dotnet test
+```
+
+改 v1 的话，底线在 `legacy/v1-python/` 里：
+
+```powershell
+cd legacy/v1-python
 uv run python -m tests.smoke
 uv run al --help
 ```
 
-涉及界面的改动再跑一次 `uv run al-gui`，确认：
+## 不要提交
 
-- 没有数据目录时能正常创建并显示空状态（issue #4）；
-- 五个页面都能切换，不出现灰色错误块；
-- 导入预检、实例详情、删除确认对话框能正常打开；
-- 深色/浅色主题切换正常。
+`build/`、`artifacts/`、`bin/`、`obj/`、`.venv/`、`*.DotSettings.user` —— `.gitignore` 已经挡住，
+如果它们出现在 `git status` 里，说明是在别的目录建了项目或者忽略了规则。
 
-## 当前状态（2026-11）
+## 改文档时
 
-- **v1 收尾完成，tag 为 `v1-final`**。之后只接受 bugfix，不再合入新功能。
-- 版本号有两处：`pyproject.toml` 的 `version`（发布/打包用）和
-  `a2cr_launcher/__init__.py` 的 `__version__`（没有安装元数据时界面兜底）。
-  改版本时两处一起改；`uv lock` 只管依赖，不会帮你同步版本号。
-- `services.DownloadCancelled` 是冻结接口（UI 用它捕获取消），
-  `tests/smoke.py` 里有专门的回归用例，不要删这个重新导出。
-- `pyrefly` 只检查内核（`core/meta/launch/java/modloader/modpack/mods/auth`
-  以及 `instance/settings/services`），`ui/` 和 `cli.py` 的类型噪音留到 v2。
-- issue #4：已修复，首次启动自动创建目录并显示失败兜底页。
-- issue #7：已实现 GUI 导入和整合包更新。
-- 整合包更新用 `managed_files` 记录托管文件，只删除哈希未变的旧文件。
-- 真实 Minecraft 启动/真实大整合包导入尚未做端到端验证，改动后建议用手上的
-  真实实例回归一次。
-- issue #8（火绒拦截 Flet 缓存）属于运行环境问题，不是应用崩溃，遇到时提示
-  用户检查安全软件。
+- 链接用相对路径，不要写绝对路径。
+- 截图放 `docs/screenshots/`，临时日志不要进仓库。
+- 新增契约文件：在 `docs/contracts/00-索引.md` 的表格里加一行，并续编号。

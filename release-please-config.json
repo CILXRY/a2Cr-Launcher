@@ -1,18 +1,64 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "release-type": "python",
+  "bootstrap-sha": "4278f6cf1e2b2222b6e4bcaf87f492b20b782882",
+  "release-type": "simple",
+  "package-name": "a2cr-launcher",
   "changelog-path": "CHANGELOG.md",
-  "bump-patch-for-minor-pre-major": true,
-  "bump-minor-pre-major": true,
+  "include-component-in-tag": false,
   "include-v-in-tag": true,
-  
+  "bump-patch-for-minor-pre-major": false,
+  "bump-minor-pre-major": true,
   "prerelease": true,
   "versioning": "prerelease",
   "prerelease-type": "beta",
-  
-  "packages": {
-    ".": {
-      "package-name": "a2cr-launcher"
+  "extra-files": [
+    {
+      "type": "xml",
+      "path": "Directory.Build.props",
+      "xpath": "//Project/PropertyGroup/Version"
     }
-  }
+  ],
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "新增"
+    },
+    {
+      "type": "fix",
+      "section": "修复"
+    },
+    {
+      "type": "perf",
+      "section": "性能"
+    },
+    {
+      "type": "refactor",
+      "section": "重构"
+    },
+    {
+      "type": "docs",
+      "section": "文档",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "测试",
+      "hidden": true
+    },
+    {
+      "type": "chore",
+      "section": "杂务",
+      "hidden": true
+    },
+    {
+      "type": "build",
+      "section": "构建",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "section": "CI",
+      "hidden": true
+    }
+  ]
 }

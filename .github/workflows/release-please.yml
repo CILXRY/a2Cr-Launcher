@@ -2,50 +2,29 @@ name: Release Please
 
 on:
   push:
-    branches:
-      - elegant
+    branches: [elegant]
 
 permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - name: Run Release Please
-        uses: googleapis/release-please-action@v5
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ github.token }}
 
-  build-and-release:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
-
-      - name: Build Windows app
-        id: build
-        uses: flet-dev/flet-build-action@v1
-        with:
-          target: windows
-          runner-python-version: "3.14"
-
-      - name: Upload to GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 打 tag 之后的构建与上传在 M5 之前保持手动（见 docs/conventions/release.md 第 6 节）。
+      # 等 Windows 产物稳定了，再在这里加 build + gh release upload。
+      - name: 汇总
+        if: steps.release.outputs.releases_created == 'true'
         run: |
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
-            "${{ steps.build.outputs.archive-path }}" \
-            --clobber
+          echo "已创建发布：${{ steps.release.outputs.tag_name }}"
