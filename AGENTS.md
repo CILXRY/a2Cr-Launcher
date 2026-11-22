@@ -10,6 +10,8 @@
   它的开发规则在 `legacy/v1-python/AGENTS.md`（只在真的去改 v1 时才需要读）。
 - **v2（C# + Avalonia）在设计阶段**，契约已定、**还没有一行代码**。
 - 主分支：`elegant`。
+- 启动器数据默认在 `~/.a2CrLauncher`；可用环境变量 `A2CR_ROOT` 整体覆盖。
+
 
 动 v1 之前先问一句"这是不是应该进 v2"。默认答案：是。
 
@@ -62,6 +64,21 @@ uv run al --help
 
 ## 改文档时
 
+- **v1 收尾完成，tag 为 `v1-final`**。之后只接受 bugfix，不再合入新功能。
+- 版本号有两处：`pyproject.toml` 的 `version`（发布/打包用）和
+  `a2cr_launcher/__init__.py` 的 `__version__`（没有安装元数据时界面兜底）。
+  改版本时两处一起改；`uv lock` 只管依赖，不会帮你同步版本号。
+- `services.DownloadCancelled` 是冻结接口（UI 用它捕获取消），
+  `tests/smoke.py` 里有专门的回归用例，不要删这个重新导出。
+- `pyrefly` 只检查内核（`core/meta/launch/java/modloader/modpack/mods/auth`
+  以及 `instance/settings/services`），`ui/` 和 `cli.py` 的类型噪音留到 v2。
+- issue #4：已修复，首次启动自动创建目录并显示失败兜底页。
+- issue #7：已实现 GUI 导入和整合包更新。
+- 整合包更新用 `managed_files` 记录托管文件，只删除哈希未变的旧文件。
+- 真实 Minecraft 启动/真实大整合包导入尚未做端到端验证，改动后建议用手上的
+  真实实例回归一次。
+- issue #8（火绒拦截 Flet 缓存）属于运行环境问题，不是应用崩溃，遇到时提示
+  用户检查安全软件。
 - 链接用相对路径，不要写绝对路径。
 - 截图放 `docs/screenshots/`，临时日志不要进仓库。
 - 新增契约文件：在 `docs/contracts/00-索引.md` 的表格里加一行，并续编号。

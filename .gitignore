@@ -27,7 +27,6 @@ flet-build/
 
 # ---- 本地演示数据与临时产物（不要提交）----
 artifacts/
-aL/
 
 # ---- 测试缓存 ----
 .pytest_cache/

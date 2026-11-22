@@ -1,10 +1,10 @@
 # 为 a2Cr Launcher 做贡献
 
-尽管这只是一个个人练习项目，但仍然感谢你的贡献。
+尽管这只是一个个人练习项目，但仍然对你的贡献予以感谢。
 
-> **v1（Python + Flet）已冻结**，只接受 bugfix，代码在 `legacy/v1-python/`。
-> 新功能一律按 [`docs/contracts/`](docs/contracts/00-索引.md) 的 v2（C# / Avalonia）契约做。
-
+> **v1（Python + Flet）已冻结**，只接受 bugfix。新功能请按
+> [`docs/a2Cr Launcher 2 Contracts/`](docs/a2Cr%20Launcher%202%20Contracts/00-索引.md)
+> 的 v2（C# / Avalonia）契约来做。
 ## 从"要做什么"开始
 
 这里 ➡️ 是 [项目 Issues](https://github.com/CILXRY/a2cr-Launcher/issues)，  
