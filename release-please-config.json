@@ -4,7 +4,11 @@
     ".": {
       "release-type": "simple",
       "package-name": "a2cr-launcher",
+      "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "bump-patch-for-minor-pre-major": false,
+      "bump-minor-pre-major": true,
       "extra-files": [
         {
           "type": "xml",
@@ -15,14 +19,46 @@
     }
   },
   "changelog-sections": [
-    { "type": "feat", "section": "新增" },
-    { "type": "fix", "section": "修复" },
-    { "type": "perf", "section": "性能" },
-    { "type": "refactor", "section": "重构" },
-    { "type": "docs", "section": "文档", "hidden": true },
-    { "type": "test", "section": "测试", "hidden": true },
-    { "type": "chore", "section": "杂务", "hidden": true },
-    { "type": "build", "section": "构建", "hidden": true },
-    { "type": "ci", "section": "CI", "hidden": true }
+    {
+      "type": "feat",
+      "section": "新增"
+    },
+    {
+      "type": "fix",
+      "section": "修复"
+    },
+    {
+      "type": "perf",
+      "section": "性能"
+    },
+    {
+      "type": "refactor",
+      "section": "重构"
+    },
+    {
+      "type": "docs",
+      "section": "文档",
+      "hidden": true
+    },
+    {
+      "type": "test",
+      "section": "测试",
+      "hidden": true
+    },
+    {
+      "type": "chore",
+      "section": "杂务",
+      "hidden": true
+    },
+    {
+      "type": "build",
+      "section": "构建",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "section": "CI",
+      "hidden": true
+    }
   ]
 }
