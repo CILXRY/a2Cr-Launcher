@@ -41,18 +41,25 @@ public sealed class VersionCatalog
 
     public async Task<JsonObject> GetAsync(string versionId, bool refresh, CancellationToken cancellationToken)
     {
-        var summary = (await ListAsync(refresh, cancellationToken).ConfigureAwait(false))
-            .FirstOrDefault(item => string.Equals(item.Id, versionId, StringComparison.Ordinal));
-        if (summary is null)
-        {
-            throw new LauncherException("version_unknown", $"找不到版本 {versionId}。", "请先用 version 查看可用版本。");
-        }
-
         var versionDirectory = IoPath.Combine(_paths.VersionsDir, versionId);
         var versionPath = IoPath.Combine(versionDirectory, $"{versionId}.json");
         if (!refresh && File.Exists(versionPath))
         {
             return await ReadObjectAsync(versionPath, cancellationToken).ConfigureAwait(false);
+        }
+
+        // 加载器版本不在 Mojang 清单里，只能读本地 profile；refresh 也不能把它当原版重下。
+        var summary = (await ListAsync(refresh, cancellationToken).ConfigureAwait(false))
+            .FirstOrDefault(item => string.Equals(item.Id, versionId, StringComparison.Ordinal));
+        if (summary is null)
+        {
+            if (File.Exists(versionPath))
+            {
+                return await ReadObjectAsync(versionPath, cancellationToken).ConfigureAwait(false);
+            }
+
+            throw new LauncherException("version_unknown", $"找不到版本 {versionId}。",
+                "请先用 version 查看可用版本；加载器版本请先运行 install。");
         }
 
         Directory.CreateDirectory(versionDirectory);

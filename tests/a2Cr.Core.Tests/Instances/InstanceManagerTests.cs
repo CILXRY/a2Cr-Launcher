@@ -96,6 +96,19 @@ public sealed class InstanceManagerTests
     }
 
     [Fact]
+    public async Task ListAsync_SkipsFoldersWithoutInstanceJson()
+    {
+        using var root = new TestRoot();
+        var paths = root.CreatePaths();
+        var manager = await CreateManagerAsync(paths);
+        Directory.CreateDirectory(System.IO.Path.Combine(paths.InstancesDir, "1.21.1"));
+
+        var list = await manager.ListAsync(CancellationToken.None);
+
+        Assert.Empty(list);
+    }
+
+    [Fact]
     public async Task ListAsync_ReportsBrokenMetadataWithoutCrashing()
     {
         using var root = new TestRoot();

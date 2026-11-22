@@ -43,11 +43,13 @@ public sealed class InstanceManager
                 result.Add(new InstanceSummary(folder, metadata.Name, metadata.McVersion, metadata.VersionId,
                     metadata.LoaderType, metadata.LoaderVersion, metadata.LastPlayed, false, null));
             }
-            else
+            else if (load.Status == InstanceLoadStatus.Broken)
             {
                 result.Add(new InstanceSummary(folder, folder, string.Empty, string.Empty, string.Empty,
-                    string.Empty, null, true, load.Error ?? "缺少 instance.json"));
+                    string.Empty, null, true, load.Error ?? "instance.json 损坏"));
             }
+
+            // 没有 instance.json 的目录不是实例（例如 `launch --version` 直接用的游戏目录），列表里跳过。
         }
 
         return result;

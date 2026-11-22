@@ -40,6 +40,26 @@ public sealed class VersionCatalogTests
     }
 
     [Fact]
+    public async Task Get_ReadsLocalLoaderProfileWithoutManifestEntry()
+    {
+        var paths = CreatePaths();
+        Directory.CreateDirectory(paths.MetaDir);
+        await File.WriteAllTextAsync(paths.VersionManifestPath, "{\"versions\":[]}");
+        var versionId = "fabric-loader-0.16.9-1.21.1";
+        var versionDir = System.IO.Path.Combine(paths.VersionsDir, versionId);
+        Directory.CreateDirectory(versionDir);
+        await File.WriteAllTextAsync(System.IO.Path.Combine(versionDir, versionId + ".json"),
+            $"{{\"id\":\"{versionId}\",\"inheritsFrom\":\"1.21.1\"}}");
+        var handler = new CountingHandler();
+        var catalog = new VersionCatalog(paths, new HttpClient(handler));
+
+        var meta = await catalog.GetAsync(versionId, false, CancellationToken.None);
+
+        Assert.Equal("1.21.1", meta["inheritsFrom"]!.GetValue<string>());
+        Assert.Equal(0, handler.Requests);
+    }
+
+    [Fact]
     public async Task List_ReportsCorruptCacheAsMetaIncomplete()
     {
         var paths = CreatePaths();
