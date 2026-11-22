@@ -159,6 +159,7 @@ internal static class Program
         "命令：\n" +
         "  version [--refresh]       列出版本\n" +
         "  install <version_id>      安装版本\n" +
+        "  launch <version_id>      启动游戏\n" +
         "  java list                 列出 Java\n" +
         "  doctor                    检查环境\n\n" +
         "全局选项：--root <路径>  --json  --refresh  --no-progress");

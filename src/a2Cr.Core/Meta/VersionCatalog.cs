@@ -122,7 +122,7 @@ public sealed class VersionInstaller
         await EnsureInheritedMetadataAsync(raw, refresh, cancellationToken).ConfigureAwait(false);
         var merged = await new VersionMetaMerger(_paths).ResolveAsync(versionId, cancellationToken).ConfigureAwait(false);
         var items = new List<DownloadItem>();
-        AddVersionDownloads(merged, versionId, items);
+        AddVersionDownloads(merged, versionId, merged["_baseVersion"]?.GetValue<string>() ?? versionId, items);
         AddLibraries(merged, items);
         AddNatives(merged, items);
         if (items.Count == 0) throw new LauncherException("meta_incomplete", $"版本 {versionId} 没有可下载的文件。");
@@ -162,12 +162,13 @@ public sealed class VersionInstaller
         if (!report.AllSucceeded) throw new DownloadException(report.Failed);
     }
 
-    private void AddVersionDownloads(JsonObject meta, string versionId, ICollection<DownloadItem> items)
+    private void AddVersionDownloads(JsonObject meta, string versionId, string baseVersion,
+        ICollection<DownloadItem> items)
     {
         var client = meta["downloads"]?["client"] as JsonObject;
         if (client?["url"]?.GetValue<string>() is { } url && client["sha1"]?.GetValue<string>() is { } sha1)
         {
-            items.Add(new DownloadItem(url, IoPath.Combine(_paths.VersionsDir, versionId, "client.jar"), sha1,
+            items.Add(new DownloadItem(url, IoPath.Combine(_paths.VersionsDir, baseVersion, "client.jar"), sha1,
                 client["size"]?.GetValue<long>() ?? 0));
         }
         var assetIndex = meta["assetIndex"] as JsonObject;
