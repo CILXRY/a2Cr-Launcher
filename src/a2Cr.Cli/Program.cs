@@ -1,6 +1,7 @@
 using System.Text.Json;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Java;
+using a2Cr.Core.Launch;
 using a2Cr.Core.Meta;
 using a2Cr.Core.Path;
 
@@ -83,6 +84,23 @@ internal static class Program
                     if (json) WriteJson(new { ok = true, data = new { version = positional[1] } });
                     else Console.WriteLine($"已安装版本 {positional[1]}");
                     return 0;
+                }
+                case "launch" when positional.Count > 1:
+                {
+                    var versionId = positional[1];
+                    var catalog = new VersionCatalog(paths);
+                    await catalog.GetAsync(versionId, refresh, cancellation.Token);
+                    var meta = await new VersionMetaMerger(paths).ResolveAsync(versionId, cancellation.Token);
+                    var gameDirectory = positional.Count > 2
+                        ? positional[2]
+                        : System.IO.Path.Combine(paths.InstancesDir, "default");
+                    var plan = new LaunchArgumentBuilder(paths).Build(meta, versionId,
+                        new LaunchOptions(gameDirectory));
+                    var result = await new GameProcessLauncher().RunAsync(plan, gameDirectory,
+                        new LaunchCallbacks(OnLog: line => Console.WriteLine(line)), cancellation.Token);
+                    if (json) WriteJson(new { ok = true, data = new { version = versionId, exitCode = result.ExitCode } });
+                    else Console.WriteLine($"游戏已退出，退出码：{result.ExitCode}");
+                    return result.ExitCode == 0 ? 0 : 4;
                 }
                 default:
                     return Fail(json, "usage", $"未知命令 {command}。", "使用 --help 查看命令列表。", 2);

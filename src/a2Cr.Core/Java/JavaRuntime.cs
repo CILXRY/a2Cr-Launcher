@@ -17,7 +17,7 @@ public sealed record JavaRuntime(string Home, int Major, string Version)
     }
 }
 
-public sealed class JavaRuntimeFinder
+public class JavaRuntimeFinder
 {
     public IReadOnlyList<JavaRuntime> Find(IEnumerable<string>? extraPaths = null)
     {
@@ -56,7 +56,7 @@ public sealed class JavaRuntimeFinder
         return found.OrderByDescending(item => item.Major).ThenBy(item => item.Home, StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
-    public JavaRuntime Select(int requiredMajor, IEnumerable<string>? extraPaths = null)
+    public virtual JavaRuntime Select(int requiredMajor, IEnumerable<string>? extraPaths = null)
     {
         return Select(requiredMajor, Find(extraPaths));
     }
