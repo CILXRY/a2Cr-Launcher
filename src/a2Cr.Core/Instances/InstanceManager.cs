@@ -1,8 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
-using a2Cr.Core.Download;
 using a2Cr.Core.Errors;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Pool;
 using a2Cr.Core.Settings;
 using a2Cr.Core.Storage;
@@ -17,11 +16,11 @@ public sealed record CreateInstanceResult(InstanceMetadata Metadata, ReconcileRe
 
 public sealed class InstanceManager
 {
-    private readonly LauncherPaths _paths;
+    private readonly PathsDefinitions _paths;
     private readonly LauncherSettings _settings;
     private readonly PoolReconciler _reconciler;
 
-    public InstanceManager(LauncherPaths paths, LauncherSettings settings, PoolReconciler? reconciler = null)
+    public InstanceManager(PathsDefinitions paths, LauncherSettings settings, PoolReconciler? reconciler = null)
     {
         _paths = paths;
         _settings = settings;

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Meta;
-using a2Cr.Core.Path;
 
 namespace a2Cr.Core.Tests.Meta;
 
@@ -73,7 +73,7 @@ public sealed class VersionCatalogTests
         Assert.Equal("meta_incomplete", exception.Code);
     }
 
-    private static LauncherPaths CreatePaths() => new(
+    private static PathsDefinitions CreatePaths() => new(
         System.IO.Path.Combine(System.IO.Path.GetTempPath(), "a2cr-catalog-tests", Guid.NewGuid().ToString("N")));
 
     private sealed class CountingHandler : HttpMessageHandler

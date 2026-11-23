@@ -1,4 +1,4 @@
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 
 namespace a2Cr.Core.Meta;
 
@@ -26,7 +26,7 @@ public static class LibraryResolver
 
     public static IReadOnlyList<LibraryArtifact> BuildDownloads(
         System.Text.Json.Nodes.JsonObject meta,
-        LauncherPaths paths,
+        PathsDefinitions paths,
         string osName,
         string osArch)
     {

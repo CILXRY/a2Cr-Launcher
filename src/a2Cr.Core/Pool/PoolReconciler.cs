@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using a2Cr.Core.Instances;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Storage;
 using IoPath = System.IO.Path;
 
@@ -13,9 +13,9 @@ public sealed record ReconcileReport(int Linked, int Copied, int Removed, int Us
 
 public sealed class PoolReconciler
 {
-    private readonly LauncherPaths _paths;
+    private readonly PathsDefinitions _paths;
 
-    public PoolReconciler(LauncherPaths paths)
+    public PoolReconciler(PathsDefinitions paths)
     {
         _paths = paths;
     }

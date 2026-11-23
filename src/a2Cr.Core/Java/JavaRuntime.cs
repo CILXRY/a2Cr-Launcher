@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using a2Cr.Core.Errors;
-using IoPath = System.IO.Path;
 
 namespace a2Cr.Core.Java;
 
@@ -12,7 +11,7 @@ public sealed record JavaRuntime(string Home, int Major, string Version)
         get
         {
             var executable = OperatingSystem.IsWindows() ? "java.exe" : "java";
-            return IoPath.Combine(Home, "bin", executable);
+            return Path.Combine(Home, "bin", executable);
         }
     }
 }
@@ -30,16 +29,16 @@ public class JavaRuntimeFinder
         {
             foreach (var vendor in new[] { "Zulu", "Java", "Eclipse Adoptium", "Microsoft", "BellSoft", "Amazon Corretto", "Semeru" })
             {
-                AddDirectories(candidates, IoPath.Combine(programFiles, vendor));
+                AddDirectories(candidates, Path.Combine(programFiles, vendor));
             }
         }
 
         var appData = Environment.GetEnvironmentVariable("APPDATA");
-        if (!string.IsNullOrWhiteSpace(appData)) AddDirectories(candidates, IoPath.Combine(appData, ".minecraft", "runtime"));
+        if (!string.IsNullOrWhiteSpace(appData)) AddDirectories(candidates, Path.Combine(appData, ".minecraft", "runtime"));
         var localAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA");
         if (!string.IsNullOrWhiteSpace(localAppData))
         {
-            AddDirectories(candidates, IoPath.Combine(localAppData, "Packages", "Microsoft.4297127D64EC_8wekyb3d8bbwe", "LocalCache", "Local", "runtime"));
+            AddDirectories(candidates, Path.Combine(localAppData, "Packages", "Microsoft.4297127D64EC_8wekyb3d8bbwe", "LocalCache", "Local", "runtime"));
         }
 
         if (extraPaths is not null) candidates.AddRange(extraPaths);
@@ -75,7 +74,7 @@ public class JavaRuntimeFinder
     {
         if (File.Exists(path)) return path;
         var executable = OperatingSystem.IsWindows() ? "java.exe" : "java";
-        var candidate = IoPath.Combine(path, "bin", executable);
+        var candidate = Path.Combine(path, "bin", executable);
         return File.Exists(candidate) ? candidate : null;
     }
 
@@ -83,9 +82,9 @@ public class JavaRuntimeFinder
     {
         try
         {
-            var fullPath = IoPath.GetFullPath(path);
+            var fullPath = Path.GetFullPath(path);
             if (!Directory.Exists(fullPath)) return null;
-            var releasePath = IoPath.Combine(fullPath, "release");
+            var releasePath = Path.Combine(fullPath, "release");
             var version = File.Exists(releasePath) ? ReadRelease(releasePath) : null;
             if (version is null)
             {
@@ -169,9 +168,9 @@ public class JavaRuntimeFinder
         var path = Environment.GetEnvironmentVariable("PATH");
         if (string.IsNullOrWhiteSpace(path)) return null;
         var executable = OperatingSystem.IsWindows() ? "java.exe" : "java";
-        foreach (var directory in path.Split(IoPath.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+        foreach (var directory in path.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
         {
-            var candidate = IoPath.Combine(directory, executable);
+            var candidate = Path.Combine(directory, executable);
             if (File.Exists(candidate)) return Directory.GetParent(directory)?.FullName;
         }
 
@@ -179,6 +178,6 @@ public class JavaRuntimeFinder
     }
 
     private static bool PathsEqual(string left, string right) =>
-        string.Equals(IoPath.GetFullPath(left).TrimEnd(IoPath.DirectorySeparatorChar),
-            IoPath.GetFullPath(right).TrimEnd(IoPath.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
+        string.Equals(Path.GetFullPath(left).TrimEnd(Path.DirectorySeparatorChar),
+            Path.GetFullPath(right).TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase);
 }

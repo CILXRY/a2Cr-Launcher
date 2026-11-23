@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Storage;
 
 namespace a2Cr.Core.Settings;
@@ -16,7 +16,7 @@ public sealed class LauncherSettings
         EnsureDefaults();
     }
 
-    public static async Task<LauncherSettings> LoadAsync(LauncherPaths paths, CancellationToken cancellationToken)
+    public static async Task<LauncherSettings> LoadAsync(PathsDefinitions paths, CancellationToken cancellationToken)
     {
         var path = System.IO.Path.Combine(paths.ConfigsDir, "launcher.json");
         JsonObject? root;
@@ -103,7 +103,7 @@ public sealed class LauncherSettings
 
     public JsonObject Root => _root;
 
-    public async Task SaveAsync(LauncherPaths paths, CancellationToken cancellationToken)
+    public async Task SaveAsync(PathsDefinitions paths, CancellationToken cancellationToken)
     {
         var path = System.IO.Path.Combine(paths.ConfigsDir, "launcher.json");
         await AtomicJson.WriteObjectAsync(path, _root, cancellationToken).ConfigureAwait(false);

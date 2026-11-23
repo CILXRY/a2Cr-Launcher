@@ -1,5 +1,5 @@
 using a2Cr.Core.Instances;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Pool;
 using a2Cr.Core.Settings;
 using a2Cr.Core.Storage;
@@ -79,13 +79,13 @@ public sealed class PoolReconcilerTests
         Assert.Equal(FileOrigin.User, entry.Origin);
     }
 
-    private static async Task<InstanceManager> CreateManagerAsync(LauncherPaths paths)
+    private static async Task<InstanceManager> CreateManagerAsync(PathsDefinitions paths)
     {
         var settings = await LauncherSettings.LoadAsync(paths, CancellationToken.None);
         return new InstanceManager(paths, settings);
     }
 
-    private static async Task<string> WritePoolModAsync(LauncherPaths paths, string name, string content)
+    private static async Task<string> WritePoolModAsync(PathsDefinitions paths, string name, string content)
     {
         var directory = System.IO.Path.Combine(paths.ModsPoolDir, "fabric", "1.21.1");
         Directory.CreateDirectory(directory);

@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Storage;
 using IoPath = System.IO.Path;
 
@@ -18,7 +18,7 @@ public sealed record VersionIdentity(
 /// <summary>从已安装的版本 JSON 反推原版版本号和加载器，供实例元数据使用。</summary>
 public static class LoaderIdentity
 {
-    public static async Task<VersionIdentity> ReadAsync(LauncherPaths paths, string versionId,
+    public static async Task<VersionIdentity> ReadAsync(PathsDefinitions paths, string versionId,
         CancellationToken cancellationToken)
     {
         var path = IoPath.Combine(paths.VersionsDir, versionId, $"{versionId}.json");

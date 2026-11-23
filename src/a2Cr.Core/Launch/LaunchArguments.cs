@@ -1,10 +1,9 @@
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Java;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Meta;
-using a2Cr.Core.Path;
 using IoPath = System.IO.Path;
 
 namespace a2Cr.Core.Launch;
@@ -37,7 +36,7 @@ public sealed record LaunchPlan(
 
 public static class ClasspathBuilder
 {
-    public static IReadOnlyList<string> Build(JsonObject meta, LauncherPaths paths, string versionId,
+    public static IReadOnlyList<string> Build(JsonObject meta, PathsDefinitions paths, string versionId,
         string osName, string osArch, bool includeClient)
     {
         var result = new List<string>();
@@ -69,10 +68,10 @@ public static class ClasspathBuilder
 
 public sealed class LaunchArgumentBuilder
 {
-    private readonly LauncherPaths _paths;
+    private readonly PathsDefinitions _paths;
     private readonly JavaRuntimeFinder _javaFinder;
 
-    public LaunchArgumentBuilder(LauncherPaths paths, JavaRuntimeFinder? javaFinder = null)
+    public LaunchArgumentBuilder(PathsDefinitions paths, JavaRuntimeFinder? javaFinder = null)
     {
         _paths = paths;
         _javaFinder = javaFinder ?? new JavaRuntimeFinder();
@@ -81,7 +80,7 @@ public sealed class LaunchArgumentBuilder
     public LaunchPlan Build(JsonObject meta, string versionId, LaunchOptions options)
     {
         var arguments = meta["arguments"] as JsonObject
-            ?? throw new MetaIncompleteException("版本信息不完整：缺少现代 arguments 字段。");
+                        ?? throw new MetaIncompleteException("版本信息不完整：缺少现代 arguments 字段。");
         if (meta["mainClass"]?.GetValue<string>() is not { Length: > 0 } mainClass)
         {
             throw new MetaIncompleteException("版本信息不完整：缺少 mainClass。");
@@ -99,7 +98,9 @@ public sealed class LaunchArgumentBuilder
 
         var baseVersion = meta["_baseVersion"]?.GetValue<string>() ?? versionId;
         var mainClassUsesBootstrap = mainClass.Contains("bootstraplauncher", StringComparison.OrdinalIgnoreCase);
-        var classpath = ClasspathBuilder.Build(meta, _paths, versionId, PlatformName(), PlatformArch(), !mainClassUsesBootstrap);
+        var classpath = ClasspathBuilder.Build(meta, _paths, versionId,
+            Core.Launcher.Platform.SystemInfo.PlatformName, Core.Launcher.Platform.SystemInfo.PlatformArchitecture,
+            !mainClassUsesBootstrap);
         ClasspathBuilder.EnsureFilesExist(classpath);
 
         var natives = IoPath.Combine(_paths.VersionsDir, versionId, "natives");
@@ -142,9 +143,9 @@ public sealed class LaunchArgumentBuilder
     private Dictionary<string, string> BuildValues(JsonObject meta, string versionId, string baseVersion,
         LaunchOptions options, IReadOnlyList<string> classpath, string natives)
     {
-        var playerUuid = options.PlayerUuid ?? OfflineUuid(options.PlayerName);
+        var playerUuid = options.PlayerUuid ?? GameInstance.Auth.Offline.GenerateOfflineUuid(options.PlayerName);
         var assetIndex = meta["assetIndex"]?["id"]?.GetValue<string>()
-            ?? throw new MetaIncompleteException("版本信息不完整：缺少 assetIndex.id。");
+                         ?? throw new MetaIncompleteException("版本信息不完整：缺少 assetIndex.id。");
         return new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["auth_player_name"] = options.PlayerName,
@@ -181,7 +182,8 @@ public sealed class LaunchArgumentBuilder
             }
 
             if (item is not JsonObject conditional) continue;
-            if (!RuleEvaluator.IsAllowed(conditional["rules"], PlatformName(), PlatformArch(), features)) continue;
+            if (!RuleEvaluator.IsAllowed(conditional["rules"], Launcher.Platform.SystemInfo.PlatformName,
+                    Launcher.Platform.SystemInfo.PlatformArchitecture, features)) continue;
             AddValue(target, conditional["value"], values);
         }
     }
@@ -233,18 +235,4 @@ public sealed class LaunchArgumentBuilder
 
         return builder.ToString();
     }
-
-    private static string OfflineUuid(string name)
-    {
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes($"OfflinePlayer:{name}"));
-        hash[6] = (byte)((hash[6] & 0x0f) | 0x30);
-        hash[8] = (byte)((hash[8] & 0x3f) | 0x80);
-        return new Guid(hash).ToString();
-    }
-
-    private static string PlatformName() => OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "osx" : "linux";
-    private static string PlatformArch() => System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant() switch
-    {
-        "x64" => "x86_64", "x86" => "x86", "arm64" => "arm64", var value => value
-    };
 }

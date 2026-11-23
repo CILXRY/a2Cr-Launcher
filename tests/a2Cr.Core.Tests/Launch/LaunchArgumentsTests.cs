@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Launch;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using IoPath = System.IO.Path;
 
 namespace a2Cr.Core.Tests.Launch;
@@ -141,7 +141,7 @@ public sealed class LaunchArgumentsTests
         ["libraries"] = new JsonArray()
     };
 
-    private static LauncherPaths CreatePaths() => new(
+    private static PathsDefinitions CreatePaths() => new(
         IoPath.Combine(IoPath.GetTempPath(), "a2cr-launch-tests", Guid.NewGuid().ToString("N")));
 
     private sealed class StubJavaFinder : a2Cr.Core.Java.JavaRuntimeFinder

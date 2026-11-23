@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Instances;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Settings;
 using a2Cr.Core.Storage;
 
@@ -129,13 +129,13 @@ public sealed class InstanceManagerTests
         Assert.Equal("broken", item.Folder);
     }
 
-    private static async Task<InstanceManager> CreateManagerAsync(LauncherPaths paths)
+    private static async Task<InstanceManager> CreateManagerAsync(PathsDefinitions paths)
     {
         var settings = await LauncherSettings.LoadAsync(paths, CancellationToken.None);
         return new InstanceManager(paths, settings);
     }
 
-    private static async Task WritePoolModAsync(LauncherPaths paths, string loader, string mcVersion,
+    private static async Task WritePoolModAsync(PathsDefinitions paths, string loader, string mcVersion,
         string name, string content)
     {
         var directory = System.IO.Path.Combine(paths.ModsPoolDir, loader, mcVersion);

@@ -2,8 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using a2Cr.Core.Download;
 using a2Cr.Core.Errors;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Meta;
-using a2Cr.Core.Path;
 using a2Cr.Core.Storage;
 using IoPath = System.IO.Path;
 
@@ -26,13 +26,13 @@ public sealed class LoaderInstaller
     private const string QuiltListUrl = "https://meta.quiltmc.org/v3/versions/loader/{0}";
     private const string QuiltProfileUrl = "https://meta.quiltmc.org/v3/versions/loader/{0}/{1}/profile/json";
 
-    private readonly LauncherPaths _paths;
+    private readonly PathsDefinitions _paths;
     private readonly HttpClient _httpClient;
     private readonly DownloadService _downloader;
     private readonly IVersionInstaller _versionInstaller;
 
     public LoaderInstaller(
-        LauncherPaths paths,
+        PathsDefinitions paths,
         HttpClient? httpClient = null,
         DownloadService? downloader = null,
         IVersionInstaller? versionInstaller = null)

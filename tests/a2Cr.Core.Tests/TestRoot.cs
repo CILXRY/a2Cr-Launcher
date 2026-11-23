@@ -1,4 +1,4 @@
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 
 namespace a2Cr.Core.Tests;
 
@@ -13,9 +13,9 @@ public sealed class TestRoot : IDisposable
 
     public string Root { get; }
 
-    public LauncherPaths CreatePaths()
+    public PathsDefinitions CreatePaths()
     {
-        var paths = new LauncherPaths(Root);
+        var paths = new PathsDefinitions(Root);
         paths.CreateDirs();
         return paths;
     }

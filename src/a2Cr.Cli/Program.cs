@@ -8,9 +8,9 @@ using a2Cr.Core.Errors;
 using a2Cr.Core.Instances;
 using a2Cr.Core.Java;
 using a2Cr.Core.Launch;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Loaders;
 using a2Cr.Core.Meta;
-using a2Cr.Core.Path;
 using a2Cr.Core.Settings;
 using a2Cr.Core.Storage;
 using IoPath = System.IO.Path;
@@ -64,7 +64,7 @@ internal static class Program
             cancellation.Cancel();
         };
 
-        var paths = new LauncherPaths(cli.Root);
+        var paths = new PathsDefinitions(cli.Root);
         try
         {
             paths.CreateDirs();
@@ -89,7 +89,7 @@ internal static class Program
         }
     }
 
-    private static async Task<int> DispatchAsync(CommandLine cli, LauncherPaths paths,
+    private static async Task<int> DispatchAsync(CommandLine cli, PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         if (cli.Positionals.Count == 0)
@@ -109,7 +109,7 @@ internal static class Program
         };
     }
 
-    private static async Task<int> VersionAsync(CommandLine cli, LauncherPaths paths,
+    private static async Task<int> VersionAsync(CommandLine cli, PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         var type = (cli.Get("type") ?? "release").ToLowerInvariant();
@@ -140,7 +140,7 @@ internal static class Program
         return 0;
     }
 
-    private static async Task<int> InstallAsync(CommandLine cli, LauncherPaths paths,
+    private static async Task<int> InstallAsync(CommandLine cli, PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         if (cli.Positionals.Count < 2)
@@ -208,7 +208,7 @@ internal static class Program
         return 0;
     }
 
-    private static async Task<int> LaunchAsync(CommandLine cli, LauncherPaths paths,
+    private static async Task<int> LaunchAsync(CommandLine cli, PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         var versionId = cli.Get("version");
@@ -306,7 +306,7 @@ internal static class Program
         return 0;
     }
 
-    private static async Task<int> DoctorAsync(CommandLine cli, LauncherPaths paths,
+    private static async Task<int> DoctorAsync(CommandLine cli, PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         var report = await BuildDoctorReportAsync(paths, cancellationToken).ConfigureAwait(false);
@@ -315,7 +315,7 @@ internal static class Program
         return 0;
     }
 
-    private static async Task<DoctorReport> BuildDoctorReportAsync(LauncherPaths paths,
+    private static async Task<DoctorReport> BuildDoctorReportAsync(PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -387,7 +387,7 @@ internal static class Program
         Console.WriteLine($"版本清单缓存：{(report.VersionManifestTime is { } time ? time.ToString("yyyy-MM-dd HH:mm") : "没有")}");
     }
 
-    private static async Task<int> InstanceAsync(CommandLine cli, LauncherPaths paths,
+    private static async Task<int> InstanceAsync(CommandLine cli, PathsDefinitions paths,
         CancellationToken cancellationToken)
     {
         if (cli.Positionals.Count < 2)

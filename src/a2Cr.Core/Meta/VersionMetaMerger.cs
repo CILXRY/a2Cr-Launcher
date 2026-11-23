@@ -1,15 +1,15 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using a2Cr.Core.Errors;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 
 namespace a2Cr.Core.Meta;
 
 public sealed class VersionMetaMerger
 {
-    private readonly LauncherPaths _paths;
+    private readonly PathsDefinitions _paths;
 
-    public VersionMetaMerger(LauncherPaths paths)
+    public VersionMetaMerger(PathsDefinitions paths)
     {
         _paths = paths;
     }

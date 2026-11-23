@@ -2,9 +2,9 @@ using System.Net;
 using System.Text;
 using a2Cr.Core.Download;
 using a2Cr.Core.Errors;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Loaders;
 using a2Cr.Core.Meta;
-using a2Cr.Core.Path;
 using a2Cr.Core.Storage;
 
 namespace a2Cr.Core.Tests.Loaders;
@@ -117,7 +117,7 @@ public sealed class LoaderInstallerTests
         Assert.Equal("loader_meta_failed", exception.Code);
     }
 
-    private static LoaderInstaller CreateInstaller(LauncherPaths paths, HttpMessageHandler handler,
+    private static LoaderInstaller CreateInstaller(PathsDefinitions paths, HttpMessageHandler handler,
         IVersionInstaller parent)
     {
         var http = new HttpClient(handler);

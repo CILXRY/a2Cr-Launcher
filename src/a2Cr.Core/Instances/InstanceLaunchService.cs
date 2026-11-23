@@ -1,7 +1,7 @@
 using a2Cr.Core.Errors;
 using a2Cr.Core.Launch;
+using a2Cr.Core.Launcher.Definitions;
 using a2Cr.Core.Meta;
-using a2Cr.Core.Path;
 using a2Cr.Core.Pool;
 using a2Cr.Core.Settings;
 
@@ -46,7 +46,7 @@ public sealed class InstanceLaunchService
     private readonly LaunchArgumentBuilder _builder;
     private readonly GameProcessLauncher _processLauncher;
 
-    public InstanceLaunchService(LauncherPaths paths, LauncherSettings settings,
+    public InstanceLaunchService(PathsDefinitions paths, LauncherSettings settings,
         InstanceManager? instances = null, PoolReconciler? reconciler = null,
         VersionCatalog? catalog = null, LaunchArgumentBuilder? builder = null,
         GameProcessLauncher? processLauncher = null)

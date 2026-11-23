@@ -1,14 +1,14 @@
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
 
 namespace a2Cr.Core.Tests.Path;
 
-public sealed class LauncherPathsTests
+public sealed class PathsDefinitionsTests
 {
     [Fact]
     public void ExplicitRoot_TakesPriority()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "a2cr-tests", Guid.NewGuid().ToString("N"));
-        var paths = new LauncherPaths(root);
+        var paths = new PathsDefinitions(root);
 
         Assert.Equal(System.IO.Path.GetFullPath(root), paths.RootDir);
         paths.CreateDirs();
@@ -24,7 +24,7 @@ public sealed class LauncherPathsTests
         try
         {
             Environment.SetEnvironmentVariable("A2CR_ROOT", root);
-            Assert.Equal(System.IO.Path.GetFullPath(root), new LauncherPaths().RootDir);
+            Assert.Equal(System.IO.Path.GetFullPath(root), new PathsDefinitions().RootDir);
         }
         finally
         {

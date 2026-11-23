@@ -3,7 +3,8 @@ using System.Text.Json.Nodes;
 using a2Cr.Core.Download;
 using a2Cr.Core.Errors;
 using a2Cr.Core.Launch;
-using a2Cr.Core.Path;
+using a2Cr.Core.Launcher.Definitions;
+using a2Cr.Core.Launcher.Platform;
 using IoPath = System.IO.Path;
 
 namespace a2Cr.Core.Meta;
@@ -12,12 +13,12 @@ public sealed record VersionSummary(string Id, string Type, DateTimeOffset? Rele
 
 public sealed class VersionCatalog
 {
-    private const string ManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
-    private readonly LauncherPaths _paths;
+    private readonly string _manifestUrl = LinksDefinitions.VersionsManifestList;
+    private readonly PathsDefinitions _paths;
     private readonly HttpClient _httpClient;
     private readonly DownloadService _downloader;
 
-    public VersionCatalog(LauncherPaths paths, HttpClient? httpClient = null, DownloadService? downloader = null)
+    public VersionCatalog(PathsDefinitions paths, HttpClient? httpClient = null, DownloadService? downloader = null)
     {
         _paths = paths;
         _httpClient = httpClient ?? new HttpClient();
@@ -75,7 +76,7 @@ public sealed class VersionCatalog
         if (refresh || !File.Exists(_paths.VersionManifestPath))
         {
             Directory.CreateDirectory(_paths.MetaDir);
-            var response = await _httpClient.GetAsync(ManifestUrl, cancellationToken).ConfigureAwait(false);
+            var response = await _httpClient.GetAsync(_manifestUrl, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
             await WriteAtomicAsync(_paths.VersionManifestPath, bytes, cancellationToken).ConfigureAwait(false);
@@ -111,11 +112,11 @@ public sealed class VersionCatalog
 
 public sealed class VersionInstaller : IVersionInstaller
 {
-    private readonly LauncherPaths _paths;
+    private readonly PathsDefinitions _paths;
     private readonly VersionCatalog _catalog;
     private readonly DownloadService _downloader;
 
-    public VersionInstaller(LauncherPaths paths, VersionCatalog catalog, DownloadService downloader)
+    public VersionInstaller(PathsDefinitions paths, VersionCatalog catalog, DownloadService downloader)
     {
         _paths = paths;
         _catalog = catalog;
@@ -188,7 +189,7 @@ public sealed class VersionInstaller : IVersionInstaller
 
     private void AddLibraries(JsonObject meta, ICollection<DownloadItem> items)
     {
-        foreach (var library in LibraryResolver.BuildDownloads(meta, _paths, PlatformName(), PlatformArch()))
+        foreach (var library in LibraryResolver.BuildDownloads(meta, _paths, SystemInfo.PlatformName, SystemInfo.PlatformArchitecture))
         {
             items.Add(new DownloadItem(library.Url, IoPath.Combine(_paths.LibrariesDir, library.RelativePath.Replace('/', IoPath.DirectorySeparatorChar)),
                 library.Sha1, library.Size));
@@ -197,7 +198,7 @@ public sealed class VersionInstaller : IVersionInstaller
 
     private void AddNatives(JsonObject meta, ICollection<DownloadItem> items)
     {
-        foreach (var native in LibraryResolver.BuildNativeDownloads(meta, PlatformName(), PlatformArch()))
+        foreach (var native in LibraryResolver.BuildNativeDownloads(meta, SystemInfo.PlatformName, SystemInfo.PlatformArchitecture))
         {
             items.Add(new DownloadItem(native.Url,
                 IoPath.Combine(_paths.LibrariesDir, native.RelativePath.Replace('/', IoPath.DirectorySeparatorChar)),
@@ -208,7 +209,7 @@ public sealed class VersionInstaller : IVersionInstaller
     private void ExtractNatives(JsonObject meta, string versionId)
     {
         var nativesDirectory = IoPath.Combine(_paths.VersionsDir, versionId, "natives");
-        foreach (var native in LibraryResolver.BuildNativeDownloads(meta, PlatformName(), PlatformArch()))
+        foreach (var native in LibraryResolver.BuildNativeDownloads(meta, SystemInfo.PlatformName, SystemInfo.PlatformArchitecture))
         {
             var archive = IoPath.Combine(_paths.LibrariesDir,
                 native.RelativePath.Replace('/', IoPath.DirectorySeparatorChar));
@@ -229,18 +230,9 @@ public sealed class VersionInstaller : IVersionInstaller
             var hash = item.Value?["hash"]?.GetValue<string>();
             var size = item.Value?["size"]?.GetValue<long>() ?? 0;
             if (hash is null) continue;
-            items.Add(new DownloadItem($"https://resources.download.minecraft.net/{hash[..2]}/{hash}",
+            items.Add(new DownloadItem($"{LinksDefinitions.AssetsDownloadLink}/{hash[..2]}/{hash}",
                 IoPath.Combine(_paths.AssetsObjectsDir, hash[..2], hash), hash, size));
         }
     }
-
-    private static string PlatformName() => OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "osx" : "linux";
-    private static string PlatformArch() => System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant() switch
-    {
-        "x64" => "x86_64",
-        "x86" => "x86",
-        "arm64" => "arm64",
-        var value => value
-    };
 }
 
