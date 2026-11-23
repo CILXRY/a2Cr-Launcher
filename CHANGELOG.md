@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0-beta.1](https://github.com/CILXRY/a2Cr-Launcher/compare/v0.5.0-beta...v0.5.0-beta.1) (2026-11-23)
+
+
+### 新增
+
+* 下载功能实现 ([#26](https://github.com/CILXRY/a2Cr-Launcher/issues/26)) ([25c5824](https://github.com/CILXRY/a2Cr-Launcher/commit/25c5824446241a691467757e331dfd7157f62e16))
+* 基础框架(wip) ([28e51b3](https://github.com/CILXRY/a2Cr-Launcher/commit/28e51b3937a753e36ac7c7aabec4f7a51ef3b23b))
+
 ## [0.5.0-beta](https://github.com/CILXRY/a2Cr-Launcher/compare/v0.4.0...v0.5.0-beta) (2026-11-22)
 
 
