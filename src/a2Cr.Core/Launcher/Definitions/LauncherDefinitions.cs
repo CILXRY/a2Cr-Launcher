@@ -2,9 +2,9 @@
 
 public static class LauncherDefinitions
 {
-    private const string LauncherName = "a2Cr-Launcher";
+    public const string LauncherName = "a2Cr-Launcher";
 
-    private static readonly string LauncherVersion =
+    public static readonly string LauncherVersion =
         System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "unknown";
 
     private const string GithubRepositoryUrl = "https://github.com/CILXRY/a2Cr-Launcher";
