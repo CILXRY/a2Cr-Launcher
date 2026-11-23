@@ -49,7 +49,7 @@ public sealed class ModrinthClientTests
         await client.SearchAsync("x", null, null, 10, 0, CancellationToken.None);
 
         var userAgent = Assert.Single(handler.UserAgents);
-        Assert.Contains("a2cr-launcher", userAgent);
+        Assert.Contains("a2Cr-Launcher", userAgent);
         Assert.Contains("github.com/CILXRY/a2Cr-Launcher", userAgent);
     }
 
