@@ -1,6 +1,16 @@
 <Solution>
-  <Project Path="src/a2Cr.App/a2Cr.App.csproj" />
-  <Project Path="src/a2Cr.Cli/a2Cr.Cli.csproj" />
-  <Project Path="src/a2Cr.Core/a2Cr.Core.csproj" />
-  <Project Path="tests/a2Cr.Core.Tests/a2Cr.Core.Tests.csproj" />
+    <Folder Name="/References/">
+        <File Path="README.md"/>
+        <File Path="AGENTS.md"/>
+        <File Path=".gitignore"/>
+        <File Path="docs/readme.md"/>
+    </Folder>
+
+    <Folder Name="/a2Cr Launcher/">
+        <Project Path="src/a2Cr.App/a2Cr.App.csproj"/>
+        <Project Path="src/a2Cr.Cli/a2Cr.Cli.csproj"/>
+        <Project Path="src/a2Cr.Core/a2Cr.Core.csproj"/>
+    </Folder>
+
+    <Project Path="tests/a2Cr.Core.Tests/a2Cr.Core.Tests.csproj"/>
 </Solution>
