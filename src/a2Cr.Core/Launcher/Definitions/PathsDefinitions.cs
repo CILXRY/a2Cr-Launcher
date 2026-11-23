@@ -1,8 +1,8 @@
-﻿namespace a2Cr.Core.Launcher.Definition;
+﻿namespace a2Cr.Core.Launcher.Definitions;
 
-public sealed class PathsDefinition
+public sealed class PathsDefinitions
 {
-    public PathsDefinition(string? root = null)
+    public PathsDefinitions(string? root = null)
     {
         RootDir = RootPath(root);
     }
