@@ -1,13 +1,13 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace a2Cr.Core.Platform;
+namespace a2Cr.Core.Launcher.Platform;
 
 public abstract class SystemInfo
 {
     public static string SystemVersion { get; } =
         RuntimeInformation.OSDescription;
 
-    public static string SystemArchitecture { get; } =
+    public static string PlatformArchitecture { get; } =
         RuntimeInformation.OSArchitecture switch
         {
             Architecture.X64 => "x86_64",
@@ -16,7 +16,7 @@ public abstract class SystemInfo
             _ => "unknown"
         };
 
-    public static string SystemName { get; } =
+    public static string PlatformName { get; } =
         OperatingSystem.IsWindows() ? "windows" :
         OperatingSystem.IsMacOS() ? "osx" :
         OperatingSystem.IsLinux() ? "linux" : "unknown";
