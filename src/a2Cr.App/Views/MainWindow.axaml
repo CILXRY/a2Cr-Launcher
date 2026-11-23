@@ -1,13 +1,15 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:a2Cr.App.ViewModels"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="a2Cr.App.Views.MainWindow"
-        x:DataType="vm:MainViewModel"
-        Icon="/Assets/avalonia-logo.ico"
-        Title="a2Cr.App">
+<sukiUi:SukiWindow xmlns="https://github.com/avaloniaui"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:vm="using:a2Cr.App.ViewModels"
+                   xmlns:sukiUi="clr-namespace:SukiUI.Controls;assembly=SukiUI"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="720"
+                   x:Class="a2Cr.App.Views.MainWindow"
+                   x:DataType="vm:MainViewModel"
+                   Icon="/Assets/avalonia-logo.ico"
+                   Title="a2Cr.App"
+                   BackgroundStyle="Gradient">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -15,8 +17,29 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+    <sukiUi:SukiSideMenu>
+        <sukiUi:SukiSideMenu.Items>
+            <sukiUi:SukiSideMenuItem Header="首页">
+                <sukiUi:SukiSideMenuItem.PageContent>
+                    <TextBlock>首页</TextBlock>
+                </sukiUi:SukiSideMenuItem.PageContent>
+            </sukiUi:SukiSideMenuItem>
+            <sukiUi:SukiSideMenuItem Header="下载">
+                <sukiUi:SukiSideMenuItem.PageContent>
+                    <TextBlock>下载</TextBlock>
+                </sukiUi:SukiSideMenuItem.PageContent>
+            </sukiUi:SukiSideMenuItem>
+            <sukiUi:SukiSideMenuItem Header="实例">
+                <sukiUi:SukiSideMenuItem.PageContent>
+                    <TextBlock>实例</TextBlock>
+                </sukiUi:SukiSideMenuItem.PageContent>
+            </sukiUi:SukiSideMenuItem>
+            <sukiUi:SukiSideMenuItem Header="设置">
+                <sukiUi:SukiSideMenuItem.PageContent>
+                    <TextBlock>设置</TextBlock>
+                </sukiUi:SukiSideMenuItem.PageContent>
+            </sukiUi:SukiSideMenuItem>
+        </sukiUi:SukiSideMenu.Items>
+    </sukiUi:SukiSideMenu>
 
-</Window>
+</sukiUi:SukiWindow>
