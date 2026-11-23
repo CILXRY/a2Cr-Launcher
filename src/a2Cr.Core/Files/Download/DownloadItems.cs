@@ -1,6 +1,4 @@
-﻿using Downloader;
-
-namespace a2Cr.Core.Download;
+﻿namespace a2Cr.Core.Files.Download;
 
 public class DownloadItems
 {

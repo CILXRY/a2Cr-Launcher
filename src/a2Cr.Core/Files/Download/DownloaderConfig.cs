@@ -1,6 +1,7 @@
-﻿using Downloader;
+﻿using a2Cr.Core.Launcher.Definitions;
+using Downloader;
 
-namespace a2Cr.Core.Download;
+namespace a2Cr.Core.Files.Download;
 
 public abstract class DownloaderConfig
 {
@@ -9,7 +10,7 @@ public abstract class DownloaderConfig
         ChunkCount = 8,
         RequestConfiguration =
         {
-            UserAgent = Launcher.LauncherInfo.UserAgent
+            UserAgent = LauncherDefinitions.UserAgent
         }
     };
 }
