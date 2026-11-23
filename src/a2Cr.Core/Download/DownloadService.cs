@@ -1,11 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using a2Cr.Core.Launcher.Definitions;
 using IoPath = System.IO.Path;
 
 namespace a2Cr.Core.Download;
-
-public sealed record DownloadItem(string Url, string TargetPath, string? Sha1, long Size);
 
 public sealed record DownloadOptions
 {
@@ -40,7 +39,7 @@ public sealed class DownloadService
     public DownloadService(HttpClient? httpClient = null)
     {
         _httpClient = httpClient ?? new HttpClient();
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("a2cr-launcher/0.5 (+https://github.com/)");
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(LauncherDefinitions.UserAgent);
         _httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("identity"));
     }
 
