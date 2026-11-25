@@ -11,9 +11,10 @@ public class MicrosoftDeviceFlowTest(ITestOutputHelper testOutputHelper)
     [Fact]
     public async Task GetDeviceFlow()
     {
-        var response = await MicrosoftDeviceFlow.GetKeyPair();
+        HttpClient httpClient = new();
+        var response = await MicrosoftDeviceFlow.GetKeyPair(httpClient);
         testOutputHelper.WriteLine(response);
         var deviceId = JsonDocument.Parse(response).RootElement.GetProperty("device_code").GetString() ?? "";
-        testOutputHelper.WriteLine(await MicrosoftDeviceFlow.GetAuthStatus(deviceId));
+        testOutputHelper.WriteLine(await MicrosoftDeviceFlow.GetAuthStatus(deviceId, httpClient));
     }
 }

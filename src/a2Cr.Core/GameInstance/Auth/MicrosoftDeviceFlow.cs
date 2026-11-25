@@ -6,28 +6,30 @@ namespace a2Cr.Core.GameInstance.Auth;
 
 public class MicrosoftDeviceFlow
 {
-    public static async Task<string> GetKeyPair()
+    public static async Task<string> GetKeyPair(HttpClient client)
     {
-        using var client = new HttpClient();
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+
         var commited = new FormUrlEncodedContent([
             new KeyValuePair<string, string>("client_id", LauncherDefinitions.AzureAppId),
             new KeyValuePair<string, string>("scope", "XboxLive.signin offline_access")
         ]);
         var response = await client
-            .PostAsync("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", commited).Result.Content
+            .PostAsync("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode", commited);
+        var result = await response
+            .Content
             .ReadAsStringAsync();
-        return response;
+
+        return result;
     }
 
-    public static async Task<string> GetAuthStatus(string deviceCode)
+    public static async Task<string> GetAuthStatus(string deviceCode, HttpClient client)
     {
         string response;
         while (true)
         {
-            using var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
