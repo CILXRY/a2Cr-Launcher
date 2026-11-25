@@ -1,10 +1,15 @@
-﻿using System.Text;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace a2Cr.Core.GameInstance.Auth;
 
 public static class Offline
 {
+    /// <summary>
+    ///     返回给定 <c>name</c> 的离线 UUID
+    /// </summary>
+    /// <param name="name">玩家名</param>
+    /// <returns></returns>
     public static string GenerateOfflineUuid(string name)
     {
         // 哈希用户名
