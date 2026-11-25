@@ -1,9 +1,8 @@
 ﻿using Avalonia;
-using System;
 
 namespace a2Cr.App;
 
-sealed class Program
+internal static class Program
 {
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -13,9 +12,14 @@ sealed class Program
         .StartWithClassicDesktopLifetime(args);
 
     // Avalonia configuration, don't remove; also used by visual designer.
-    public static AppBuilder BuildAvaloniaApp()
+    private static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
+            .With(new MacOSPlatformOptions
+            {
+                // 在 macOS 不显示默认的菜单选项（在应用名里）
+                DisableDefaultApplicationMenuItems = true
+            })
 #if DEBUG
             .WithDeveloperTools()
 #endif

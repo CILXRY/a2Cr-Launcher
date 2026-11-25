@@ -3,7 +3,8 @@
              xmlns:sukiUi="clr-namespace:SukiUI;assembly=SukiUI"
              x:Class="a2Cr.App.App"
              xmlns:local="using:a2Cr.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark"
+             Name="a2Cr Launcher">
     <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
@@ -13,4 +14,19 @@
     <Application.Styles>
         <sukiUi:SukiTheme ThemeColor="Blue" />
     </Application.Styles>
+
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="About a2Cr Launcher" />
+            <NativeMenuItem Header="Test">
+                <NativeMenuItem.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="Quit a2Cr Launcher" />
+                    </NativeMenu>
+                </NativeMenuItem.Menu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+
+
 </Application>

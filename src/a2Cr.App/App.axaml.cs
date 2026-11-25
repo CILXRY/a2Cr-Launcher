@@ -1,12 +1,13 @@
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Markup.Xaml;
 using a2Cr.App.ViewModels;
 using a2Cr.App.Views;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
 
 namespace a2Cr.App;
 
-public partial class App : Application
+public class App : Application
 {
     public override void Initialize()
     {
@@ -24,5 +25,6 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+        NativeMenu.SetMenu(this, NativeMenu.GetMenu(this));
     }
 }
