@@ -18,7 +18,7 @@ public class MicrosoftAuthorizeCode
     private static readonly IPublicClientApplication LoginApplication =
         PublicClientApplicationBuilder
             .Create(LauncherDefinitions.AzureAppId)
-            // .WithAuthority("https://login.microsoftonline.com/consumers/")
+            .WithAuthority("https://login.microsoftonline.com/consumers/")
             .WithDefaultRedirectUri()
             // 在 Windows 上可以调用 WAM 来选择已经登录的 Microsoft 账户
             // .WithBroker(WindowsBrokerOptions)
@@ -51,6 +51,7 @@ public class MicrosoftAuthorizeCode
             // 最后回退到浏览器登录
             result = await LoginApplication.AcquireTokenInteractive(Scopes)
                 .WithPrompt(Prompt.SelectAccount)
+                // .WithParentActivityOrWindow()
                 .ExecuteAsync();
         }
 
