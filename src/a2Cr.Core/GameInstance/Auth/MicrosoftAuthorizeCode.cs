@@ -1,8 +1,5 @@
-using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using a2Cr.Core.Launcher.Definitions;
+using Microsoft.Identity.Client;
 
 namespace a2Cr.Core.GameInstance.Auth;
 
@@ -12,93 +9,51 @@ namespace a2Cr.Core.GameInstance.Auth;
 /// </summary>
 public class MicrosoftAuthorizeCode
 {
-    private const string GetAccessTokenUrl = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
-
-    public static async Task<string> LoginMicrosoftAccount()
+    // 定义在 Windows 上调用 WAM 的选项
+    private static readonly BrokerOptions WindowsBrokerOptions = new(BrokerOptions.OperatingSystems.Windows)
     {
-        string code = string.Empty;
+        Title = LauncherDefinitions.LauncherName
+    };
 
-        var listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 32620);
-        listener.Start();
+    private static readonly IPublicClientApplication LoginApplication =
+        PublicClientApplicationBuilder
+            .Create(LauncherDefinitions.AzureAppId)
+            // .WithAuthority("https://login.microsoftonline.com/consumers/")
+            .WithDefaultRedirectUri()
+            // 在 Windows 上可以调用 WAM 来选择已经登录的 Microsoft 账户
+            // .WithBroker(WindowsBrokerOptions)
+            .Build();
 
-        var url = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize" +
-                  "?client_id=" +
-                  $"{LauncherDefinitions.AzureAppId}" +
-                  "&response_type=code" +
-                  "&redirect_uri=http://localhost:32620" +
-                  "&response_mode=query" +
-                  "&scope=XboxLive.signin offline_access";
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        // Open:
-        // https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize
-        // ?client_id= //上面Azure应用程序的client_id
-        // &response_type=code
-        // &redirect_uri= //需要在上面Azure应用程序中添加，一般采取本地搭建临时Web服务器的方式并将回调URI设为本地地址
-        // &response_mode=query
-        // &scope=XboxLive.signin offline_access
+    // 权限范围
+    private static readonly string[] Scopes = ["XboxLive.signin", "offline_access"];
 
-        using var stream =  (await listener.AcceptTcpClientAsync()).GetStream();
-        using var reader = new StreamReader(stream, Encoding.UTF8 );
-        using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
-        
-
-        var redirectUrl = await reader.ReadLineAsync();
-        if (!string.IsNullOrEmpty(redirectUrl))
-            code = redirectUrl.Replace(" ", "+");
-
-        
-        writer.WriteLine(redirectUrl);
-
-
-        // 提取 URL
-
-        return code;
-    }
-
-    /// <summary>
-    /// 通过 登录 来获取 AccessToken
-    /// </summary>
-    /// <param name="client"><c>HttpClient</c></param>
-    /// <param name="code">通过<c>LoginMicrosoftAccount</c>获得的授权码</param>
-    /// <param name="redirectUrl">回调 URL</param>
-    /// <returns></returns>
-    public static async Task<string> GetAccessToken(HttpClient client, string code, string redirectUrl)
+    public static async Task<string> GetAccessTokenAsync()
     {
-        var commited = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("client_id", LauncherDefinitions.AzureAppId),
-            new KeyValuePair<string, string>("code", code),
-            new KeyValuePair<string, string>("grant_type", "authorization_code"),
-            new KeyValuePair<string, string>("redirect_uri", redirectUrl),
-            new KeyValuePair<string, string>("scope", "XboxLive.signin offline_access"),
-        ]);
-        var response = await client
-            .PostAsync(GetAccessTokenUrl, commited);
+        AuthenticationResult result;
 
-        var result = await response.Content.ReadAsStringAsync();
+        // 尝试使用以及登录的账户信息
+        var accounts = await LoginApplication.GetAccountsAsync();
+        var existingAccount = accounts.FirstOrDefault();
 
-        return result;
-    }
+        try
+        {
+            // 先判断已缓存的账号
+            if (existingAccount != null)
+                result = await LoginApplication
+                    .AcquireTokenSilent(Scopes, existingAccount).ExecuteAsync();
+            // 之后判断系统当前登录的账号
+            else
+                result = await LoginApplication
+                    .AcquireTokenSilent(Scopes, PublicClientApplication.OperatingSystemAccount).ExecuteAsync();
+        }
+        catch (MsalUiRequiredException)
+        {
+            // 最后回退到浏览器登录
+            result = await LoginApplication.AcquireTokenInteractive(Scopes)
+                .WithPrompt(Prompt.SelectAccount)
+                .ExecuteAsync();
+        }
 
-    /// <summary>
-    /// 通过 RefreshToken 来获取 AccessToken
-    /// </summary>
-    /// <param name="client"><c>HttpClient</c></param>
-    /// <param name="refreshToken">用于刷新的 Token</param>
-    /// <returns></returns>
-    public static async Task<string> GetAccessToken(HttpClient client, string refreshToken)
-    {
-        var commited = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("client_id", LauncherDefinitions.AzureAppId),
-            new KeyValuePair<string, string>("refresh_token", refreshToken),
-            new KeyValuePair<string, string>("grant_type", "refresh_token"),
-            new KeyValuePair<string, string>("scope", "XboxLive.signin offline_access"),
-        ]);
-
-        var response = await client
-            .PostAsync(GetAccessTokenUrl, commited);
-
-        var result = await response.Content.ReadAsStringAsync();
-
-        return result;
+        return result.AccessToken;
     }
 }
