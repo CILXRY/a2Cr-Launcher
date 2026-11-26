@@ -1,3 +1,7 @@
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using a2Cr.Core.Launcher.Definitions;
 
 namespace a2Cr.Core.GameInstance.Auth;
@@ -10,8 +14,21 @@ public class MicrosoftAuthorizeCode
 {
     private const string GetAccessTokenUrl = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
 
-    public static string LoginMicrosoftAccount(HttpClient client)
+    public static async Task<string> LoginMicrosoftAccount()
     {
+        string code = string.Empty;
+
+        var listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 32620);
+        listener.Start();
+
+        var url = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize" +
+                  "?client_id=" +
+                  $"{LauncherDefinitions.AzureAppId}" +
+                  "&response_type=code" +
+                  "&redirect_uri=http://localhost:32620" +
+                  "&response_mode=query" +
+                  "&scope=XboxLive.signin offline_access";
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
         // Open:
         // https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize
         // ?client_id= //上面Azure应用程序的client_id
@@ -20,9 +37,22 @@ public class MicrosoftAuthorizeCode
         // &response_mode=query
         // &scope=XboxLive.signin offline_access
 
+        using var stream =  (await listener.AcceptTcpClientAsync()).GetStream();
+        using var reader = new StreamReader(stream, Encoding.UTF8 );
+        using var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+        
+
+        var redirectUrl = await reader.ReadLineAsync();
+        if (!string.IsNullOrEmpty(redirectUrl))
+            code = redirectUrl.Replace(" ", "+");
+
+        
+        writer.WriteLine(redirectUrl);
+
+
         // 提取 URL
 
-        return "";
+        return code;
     }
 
     /// <summary>
@@ -32,7 +62,7 @@ public class MicrosoftAuthorizeCode
     /// <param name="code">通过<c>LoginMicrosoftAccount</c>获得的授权码</param>
     /// <param name="redirectUrl">回调 URL</param>
     /// <returns></returns>
-    public async Task<string> GetAccessToken(HttpClient client, string code, string redirectUrl)
+    public static async Task<string> GetAccessToken(HttpClient client, string code, string redirectUrl)
     {
         var commited = new FormUrlEncodedContent([
             new KeyValuePair<string, string>("client_id", LauncherDefinitions.AzureAppId),
@@ -55,7 +85,7 @@ public class MicrosoftAuthorizeCode
     /// <param name="client"><c>HttpClient</c></param>
     /// <param name="refreshToken">用于刷新的 Token</param>
     /// <returns></returns>
-    public async Task<string> GetAccessToken(HttpClient client, string refreshToken)
+    public static async Task<string> GetAccessToken(HttpClient client, string refreshToken)
     {
         var commited = new FormUrlEncodedContent([
             new KeyValuePair<string, string>("client_id", LauncherDefinitions.AzureAppId),
